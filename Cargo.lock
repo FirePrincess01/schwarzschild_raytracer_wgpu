@@ -1283,6 +1283,24 @@ dependencies = [
 [[package]]
 name = "schwarzschild_raytracer"
 version = "0.1.0"
+dependencies = [
+ "cfg-if",
+ "cgmath",
+ "console_error_panic_hook",
+ "console_log",
+ "env_logger",
+ "glam",
+ "image",
+ "instant",
+ "log",
+ "pollster",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+ "web-sys",
+ "wgpu",
+ "wgpu_renderer",
+ "winit",
+]
 
 [[package]]
 name = "scoped-tls"
