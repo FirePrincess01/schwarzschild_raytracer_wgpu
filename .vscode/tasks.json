@@ -1,0 +1,85 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "cargo build",
+			"type": "cargo",
+			"command": "build",
+			"problemMatcher": [
+				"$rustc"
+			],
+			"group": "build",
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "shared",
+				"showReuseMessage": true,
+				"clear": true
+			}
+		},
+		{
+			"label": "cargo run",
+			"type": "cargo",
+			"command": "run",
+			"problemMatcher": [
+				"$rustc"
+			],
+			"group": "test",
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "shared",
+				"showReuseMessage": true,
+				"clear": true
+			}
+		},
+		{
+			"label": "cargo run --release",
+			"type": "cargo",
+			"command": "run",
+			"args": ["--release"],
+			"problemMatcher": [
+				"$rustc"
+			],
+			"group": "test",
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "shared",
+				"showReuseMessage": true,
+				"clear": true
+			}
+		},
+		{
+			"label": "wasm-pack",
+			"type": "shell",
+			// "command": "RUSTFLAGS=--cfg=web_sys_unstable_apis wasm-pack build --target web",
+			"command": "wasm-pack build schwarzschild_raytracer --target web",
+			"problemMatcher": [
+				"$rustc"
+			],
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "shared",
+				"showReuseMessage": true,
+				"clear": true
+			}
+		},
+		{
+			"label": "python server",
+			"type": "shell",
+			"windows": {
+				"command": "python -m http.server 8000",
+			},
+			"linux": {
+				"command": "python3 -m http.server 8000",
+			},
+			"problemMatcher": []
+		}
+	]
+}

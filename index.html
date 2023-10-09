@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WGPU Demo</title>
+    <style>
+        canvas {
+            background-color: black;
+        }
+    </style>
+</head>
+
+<body id="wasm-demo">
+  <script type="module">
+        import init from "./schwarzschild_raytracer/pkg/schwarzschild_raytracer.js";
+        console.log("WASM Loading");
+        init().then(() => {
+            console.log("WASM Loaded");
+            window.addEventListener('resize', resizeCanvas, false);
+            resizeCanvas();
+        });
+
+        function resizeCanvas() {
+            var width = window.innerWidth -15;
+            var height = window.innerHeight -15;
+            
+            var elem = document.getElementById('wasm-demo');
+            var canvas = elem.children[1]; 
+
+            canvas.width = width;
+            canvas.height = height;
+            canvas.style.width = width.toString() + 'px';
+            canvas.style.height = height.toString() + 'px';;
+        }
+  </script>
+</body>
+
+</html>

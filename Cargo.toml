@@ -1,0 +1,8 @@
+
+
+[workspace]
+
+members = [
+    "wgpu_renderer",
+    "schwarzschild_raytracer",
+]

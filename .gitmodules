@@ -1,0 +1,3 @@
+[submodule "wgpu_renderer"]
+	path = wgpu_renderer
+	url = https://github.com/FirePrincess01/wgpu_renderer.git
