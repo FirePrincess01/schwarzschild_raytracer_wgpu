@@ -1284,6 +1284,7 @@ dependencies = [
 name = "schwarzschild_raytracer"
 version = "0.1.0"
 dependencies = [
+ "bytemuck",
  "cfg-if",
  "cgmath",
  "console_error_panic_hook",

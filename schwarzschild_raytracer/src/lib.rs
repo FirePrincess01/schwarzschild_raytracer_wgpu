@@ -3,7 +3,10 @@ mod renderer;
 mod geometry;
 mod performance_monitor;
 mod textured_quad;
+mod simulation;
+mod schwarzschild_sphere_shader;
 
+use schwarzschild_sphere_shader::sphere_buffer::basic_sphere_buffer::BasicSphereBuffer;
 use wgpu_renderer::default_window;
 use winit::event::{WindowEvent, KeyboardInput, VirtualKeyCode, ElementState};
 
@@ -19,7 +22,9 @@ struct SchwarzschildRaytracer {
     performance_monitor: performance_monitor::PerformanceMonitor,
 
     // data
-    textured_quad: textured_quad::TexturedQuad,
+    //textured_quad: textured_quad::TexturedQuad,
+    first_sphere: BasicSphereBuffer,
+    second_sphere: BasicSphereBuffer,
 }
 
 impl SchwarzschildRaytracer {
@@ -32,10 +37,25 @@ impl SchwarzschildRaytracer {
         let performance_monitor = performance_monitor::PerformanceMonitor::new(
             &mut renderer.wgpu_renderer);
 
-        // data
-        let textured_quad = textured_quad::TexturedQuad::new(
+        let texture_image = image::load_from_memory(include_bytes!("eso0932a.jpg")).unwrap();
+        let texture_image2 = image::load_from_memory(include_bytes!("world_8k.png")).unwrap();
+
+        let schwarz_r = renderer.get_schwarz_r();
+        let first_sphere = BasicSphereBuffer::new(
             &mut renderer.wgpu_renderer, 
-            &renderer.texture_bind_group_layout);
+            &renderer.texture_bind_group_layout, 
+            &renderer.ray_fan_bind_group_layout, 
+            500., 
+            schwarz_r, 
+            &texture_image);
+
+        let second_sphere = BasicSphereBuffer::new(
+            &mut renderer.wgpu_renderer, 
+            &renderer.texture_bind_group_layout, 
+            &renderer.ray_fan_bind_group_layout, 
+            11., 
+            schwarz_r, 
+            &texture_image2);
 
         Self {
             size,
@@ -44,7 +64,8 @@ impl SchwarzschildRaytracer {
             renderer,
             performance_monitor,
 
-            textured_quad,
+            first_sphere,
+            second_sphere,
         }
     }
 }
@@ -85,9 +106,11 @@ impl default_window::DefaultWindowApp for SchwarzschildRaytracer
     fn update(&mut self, dt: instant::Duration) {
         self.renderer.update(dt);
 
-        // self.performance_monitor.watch.start(3);
-        //     // update stuff
-        // self.performance_monitor.watch.stop(3);
+        self.performance_monitor.watch.start(3);
+            let r = self.renderer.get_radial_position();
+            self.first_sphere.update_ray_fan(self.renderer.wgpu_renderer.queue(), r);
+            self.second_sphere.update_ray_fan(self.renderer.wgpu_renderer.queue(), r);
+        self.performance_monitor.watch.stop(3);
         
         // self.performance_monitor.watch.start(4);
         //     // update more stuff
@@ -133,7 +156,7 @@ impl default_window::DefaultWindowApp for SchwarzschildRaytracer
 
     fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
         self.renderer.render(
-            &[&self.textured_quad],
+            &[&self.first_sphere, &self.second_sphere],
             &mut self.performance_monitor)
     }
 

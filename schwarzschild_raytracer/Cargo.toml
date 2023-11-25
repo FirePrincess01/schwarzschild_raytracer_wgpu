@@ -28,6 +28,8 @@ glam = "0.24"
 wgpu_renderer = { path = "../wgpu_renderer" }
 # other  
 log = "0.4"
+bytemuck = { version = "1.12", features = [ "derive" ] }
+
 
 [dependencies.image]
 version = "0.24"
