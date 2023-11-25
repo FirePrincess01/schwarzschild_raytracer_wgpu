@@ -1,6 +1,8 @@
 use glam::*;
 use super::{orbit::Orbit, polar_transformations::{look_to_vec_mat, polar2_to_carthesic}};
 
+const SAFE_FRAC_PI_2: f64 = std::f64::consts::FRAC_PI_2 - 0.0001;
+
 #[allow(dead_code)]
 #[derive(PartialEq)]
 enum ObserverState {
@@ -42,6 +44,8 @@ pub struct Observer{
     time_step: f64,
     energy: f64,
 
+    mouse_sensitivity: f64,
+
     // sub-matrices needed to assemble the first transformation
     // the camera transformation is left out, so looking around is possible even when singular
     fov_scaling: DMat3,     //constant
@@ -56,7 +60,8 @@ pub struct Observer{
 
 #[allow(dead_code)]
 impl Observer {
-    pub fn new(schwarz_r: f64, fov: f64, screen_ratio: f64) -> Self {
+    pub fn new(schwarz_r: f64, fov: f64, width: f64, height: f64) -> Self {
+        let screen_ratio = width / height;
         let position = dvec3(25., 0., 0.);
         let camera = dvec2(std::f64::consts::PI, 0.);
         Self {
@@ -67,7 +72,7 @@ impl Observer {
             state: ObserverState::FrozenFall,
             time_step: 1./60.,
             energy: 1.,
-            //fov_scaling: DMat3::from_rotation_z(-std::f64::consts::FRAC_PI_2),
+            mouse_sensitivity: fov / height,
             fov_scaling: DMat3::from_diagonal(DVec3::new((fov/2.).tan(), (fov/2.).tan() * screen_ratio, 1.)),
             standard_to_movement: DMat3::IDENTITY,
             movement_to_central: DMat3::IDENTITY,
@@ -86,6 +91,8 @@ impl Observer {
 
     // Maybe add advance_some_steps
 
+    // Updates the position with either user commands or simulated trajectory
+    // desired_direction is in terms of (forward, left, up)
     pub fn update_position(&mut self, mut desired_direction: DVec3) {
         match self.state {
             ObserverState::Unmoving | ObserverState::FrozenFall => {
@@ -192,9 +199,12 @@ impl Observer {
             else {
                 self.psi = -vel.y * vel.y / self.h_r();
             }
+            if self.psi - 1. < 1e-10 as f64 {
+                self.psi = 1.;
+            }
 
             let standard_to_central = look_to_vec_mat(-self.position).transpose();
-            if self.state == ObserverState::Orbiting {
+            if self.state == ObserverState::Orbiting && !self.orbit.as_ref().unwrap().is_central_fall() {
                 let mut tilt_angle = 0.;
                 let mut plane_angle1 = 0.;
                 let mut plane_angle2 = 0.;
@@ -202,8 +212,8 @@ impl Observer {
                 match &self.orbit {
                     Some(orbit) => {
                         tilt_angle = orbit.current_tilt_angle();
-                        plane_angle1 = -vel.x * vel.y * (r-self.schwarz_r).signum() / 
-                            ((1. + r * r * vel.z * vel.z) * self.psi * (self.psi - 1.)).sqrt();
+                        plane_angle1 = f64::acos(-vel.x * vel.y * (r-self.schwarz_r).signum() / 
+                            ((1. + r * r * vel.z * vel.z) * self.psi * (self.psi - 1.)).sqrt());
                         if r > self.schwarz_r {
                             plane_angle2 = (-vel.y / (self.h_r() * (self.psi - 1.)).sqrt()).acos();
                         }
@@ -241,14 +251,28 @@ impl Observer {
         }
     }
 
-    pub fn update_screen_ratio(&mut self, screen_ratio: f64) {
+    pub fn update_screen_format(&mut self, width: f64, height: f64) {
+        // Update screen scaling matrix
+        let screen_ratio = width / height;
         let fov_half_tan = self.fov_scaling.x_axis.x;
         self.fov_scaling = DMat3::from_diagonal(DVec3::new(fov_half_tan, fov_half_tan * screen_ratio, 1.));
+
+        // Update mouse sensitivity
+
     }
 
-    pub fn move_camera(&mut self, delta_phi: f64, delta_theta: f64) {
+    pub fn move_camera(&mut self, horizontal_pixels: f64, vertical_pixels: f64) {
+        let delta_phi = horizontal_pixels * self.mouse_sensitivity;
+        let delta_theta = vertical_pixels * self.mouse_sensitivity;
+
         self.camera.x += delta_phi;
         self.camera.y += delta_theta;
+        if self.camera.y < -SAFE_FRAC_PI_2 {
+            self.camera.y = -SAFE_FRAC_PI_2;
+        }
+        else if self.camera.y > SAFE_FRAC_PI_2 {
+            self.camera.y = SAFE_FRAC_PI_2;
+        }
     }
 
     pub fn get_schwarz_r(&self) -> f64 {

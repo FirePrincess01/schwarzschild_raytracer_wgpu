@@ -2,13 +2,12 @@
 mod renderer;
 mod geometry;
 mod performance_monitor;
-mod textured_quad;
 mod simulation;
 mod schwarzschild_sphere_shader;
 
 use schwarzschild_sphere_shader::sphere_buffer::basic_sphere_buffer::BasicSphereBuffer;
 use wgpu_renderer::default_window;
-use winit::event::{WindowEvent, KeyboardInput, VirtualKeyCode, ElementState};
+use winit::event::{WindowEvent, KeyboardInput, VirtualKeyCode, ElementState, MouseButton, TouchPhase};
 
 #[cfg(target_arch="wasm32")]
 use wasm_bindgen::prelude::*;
@@ -147,6 +146,56 @@ impl default_window::DefaultWindowApp for SchwarzschildRaytracer
                     self.renderer.process_scroll(delta);
                     true
                 }
+                WindowEvent::CursorMoved { position, .. } => {
+                    self.renderer.process_mouse_position(position.x, position.y);
+                    true
+                }
+                WindowEvent::MouseInput { 
+                    state, 
+                    button: MouseButton::Left, 
+                    .. } => {
+                        self.renderer.set_mouse_pressed(*state == ElementState::Pressed);
+                        true
+                }
+                WindowEvent::Touch(touch) => {
+                    let pos = apply_scale_factor(touch.location, self.scale_factor);
+    
+                    match touch.phase {
+                        TouchPhase::Started => {
+                            // let _consumed = self.gui.mouse_moved(pos.x as u32, pos.y as u32);
+                            // let (consumed, gui_event) = self.gui.mouse_pressed(true);
+                            // self.handle_gui_event(gui_event);
+                            let consumed = false;
+    
+                            if !consumed {
+                                self.renderer.process_mouse_position(pos.x as f64, pos.y as f64);
+                                self.renderer.set_mouse_pressed(true);
+                            }
+                        }
+                        TouchPhase::Ended => {
+                            //let (_consumed, gui_event) = self.gui.mouse_pressed(false);
+                            //self.handle_gui_event(gui_event);
+    
+                            self.renderer.set_mouse_pressed(false);
+                        }
+                        TouchPhase::Cancelled => {
+                            // let (_consumed, gui_event) = self.gui.mouse_pressed(false);
+                            // self.handle_gui_event(gui_event);
+                            
+                            self.renderer.set_mouse_pressed(false);
+                        }
+                        TouchPhase::Moved => {
+                            //let consumed = self.gui.mouse_moved(pos.x as u32, pos.y as u32);
+                            let consumed = false;
+
+                            if !consumed {
+                                self.renderer.process_mouse_position(pos.x as f64, pos.y as f64);
+                            }
+                        }
+                    }
+                    true
+                } 
+
                 _ => false,
             };
         self.performance_monitor.watch.stop(2);

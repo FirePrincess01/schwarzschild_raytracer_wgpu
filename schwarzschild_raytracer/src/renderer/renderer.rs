@@ -10,11 +10,13 @@ use crate::schwarzschild_sphere_shader::sphere_observer_uniform_buffers::SphereO
 use crate::schwarzschild_sphere_shader::{ray_fan_texture, ray_fan_bind_group_layout};
 use crate::simulation::observer::Observer;
 use crate::{schwarzschild_sphere_shader, simulation};
-use glam::DVec3;
+use glam::{DVec3, DVec2};
 use wgpu_renderer::renderer::{WgpuRenderer, self};
 use wgpu_renderer::vertex_color_shader::{self, VertexColorShaderDraw};
 use wgpu_renderer::vertex_texture_shader::{self, VertexTextureShaderDraw};
 use winit::event::{VirtualKeyCode, ElementState, MouseScrollDelta};
+
+use super::observer_controller::ObserverController;
 
 pub struct Renderer 
 {   
@@ -33,6 +35,11 @@ pub struct Renderer
     pub camera_bind_group_layout: vertex_color_shader::CameraBindGroupLayout,
     camera_uniform_orthographic: vertex_color_shader::CameraUniform,
     camera_uniform_orthographic_buffer: vertex_color_shader::CameraUniformBuffer,
+
+    camera_controller: ObserverController,
+
+    mouse_pressed: bool,
+    last_mouse_position: DVec2,
 }
 
 impl Renderer {
@@ -68,15 +75,13 @@ impl Renderer {
 
         let schwarz_r = 10.;
         let fov = FRAC_PI_2;
-        let ratio = surface_width as f64 / surface_height as f64;
-        let observer = Observer::new(schwarz_r, fov, ratio);
+        let observer = Observer::new(schwarz_r, fov, surface_width as f64, surface_height as f64);
 
-
-        //TODO write control processor
-        // let speed = 4.0;
-        // let sensitivity = 1.0;
-        // let sensitivity_scroll = 1.0;
-        // let camera_controller = super::camera_controller::CameraController::new(speed, sensitivity, sensitivity_scroll);
+        // processes user inputs regarding movement and camera
+        let speed = 4.0;
+        let sensitivity = 1.0;
+        let sensitivity_scroll = 1.0;
+        let camera_controller = super::observer_controller::ObserverController::new(speed, sensitivity, sensitivity_scroll);
 
         // let camera_uniform = vertex_color_shader::CameraUniform::new();
 
@@ -105,6 +110,9 @@ impl Renderer {
             camera_bind_group_layout,
             camera_uniform_orthographic,
             camera_uniform_orthographic_buffer,
+            camera_controller,
+            mouse_pressed: false,
+            last_mouse_position: DVec2::ZERO,
         } 
     }
 
@@ -113,8 +121,7 @@ impl Renderer {
 
     pub fn resize(&mut self, new_size: winit::dpi::PhysicalSize<u32>) {
         // self.size = new_size;
-        let ratio = new_size.width as f64 / new_size.height as f64;
-        self.observer.update_screen_ratio(ratio);
+        self.observer.update_screen_format(new_size.width as f64, new_size.height as f64);
 
         //self.camera_projection.resize(new_size.width, new_size.height);
         self.wgpu_renderer.resize(new_size);
@@ -124,7 +131,7 @@ impl Renderer {
     }
 
     pub fn update(&mut self, dt: instant::Duration) {
-        self.observer.update_position(DVec3::ZERO);
+        self.camera_controller.update_observer(&mut self.observer, dt);
         let observer_pipeline = self.observer.calc_transformation_pipeline();
         self.sphere_observer_uniform_buffer.update(self.wgpu_renderer.queue(), observer_pipeline);
 
@@ -136,33 +143,47 @@ impl Renderer {
 
     pub fn process_keyboard(&mut self, key: VirtualKeyCode, state: ElementState) -> bool 
     {
-        match key {
-            VirtualKeyCode::Up => {
-                self.observer.move_camera(0., 1./50.);
+        let res = match key {
+            VirtualKeyCode::Key1 => {
+                self.observer.start_unmoving();
                 true
             },
-            VirtualKeyCode::Down => {
-                self.observer.move_camera(0., -1./50.);
+            VirtualKeyCode::Key2 => {
+                self.observer.start_frozen_fall();
                 true
             },
-            VirtualKeyCode::Left => {
-                self.observer.move_camera(1./50., 0.);
+            VirtualKeyCode::Key3 => {
+                self.observer.start_orbit(0.);
                 true
             },
-            VirtualKeyCode::Right => {
-                self.observer.move_camera(-1./50., 0.);
+            VirtualKeyCode::Key4 => {
+                self.observer.start_orbit(18.);
                 true
             },
             _ => false,
-        }
-        // TODO
-        //self.camera_controller.process_keyboard(key, state)
+        };
+        if res {return true;}
+        self.camera_controller.process_keyboard(key, state)
     }
 
     pub fn process_scroll(&mut self, delta: &MouseScrollDelta) 
     {
         // wont be using that now
         //self.camera_controller.process_scroll(delta);
+    }
+
+    pub fn process_mouse_position(&mut self, x: f64, y: f64) {
+        if self.mouse_pressed {
+            let delta_x = x - self.last_mouse_position.x;
+            let delta_y = y - self.last_mouse_position.y;
+            self.camera_controller.process_mouse(delta_x, delta_y);
+        }
+        self.last_mouse_position.x = x;
+        self.last_mouse_position.y = y;
+    }
+
+    pub fn set_mouse_pressed(&mut self, pressed: bool) {
+        self.mouse_pressed = pressed;
     }
 
     pub fn render(&mut self, 

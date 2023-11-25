@@ -1,6 +1,6 @@
 
 
 mod renderer;
-mod camera_controller;
+mod observer_controller;
 
 pub use renderer::Renderer;

@@ -210,4 +210,8 @@ impl Orbit {
     pub fn is_singular(&self) -> bool {
         return self.has_hit_singularity;
     }
+
+    pub fn is_central_fall(&self) -> bool {
+        return self.rotation == 0.;
+    }
 }
