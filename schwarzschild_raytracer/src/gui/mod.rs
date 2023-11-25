@@ -17,6 +17,7 @@ pub struct Gui
 
     gui_menu: menu::Menu,
     gui_side_buttons: side_buttons::SideButtons,
+    gui_movement_buttons: movement_buttons::MovementButtons,
 
     show_side_buttons: bool,
     show_movement_buttons: bool,
@@ -41,15 +42,22 @@ impl Gui {
             width, 
             height);
 
+        let gui_movement_buttons = movement_buttons::MovementButtons::new(
+            wgpu_renderer, 
+            texture_bind_group_layout, 
+            width, 
+            height);
+
         Self {
             width,
             height,
 
             gui_menu,
             gui_side_buttons,
+            gui_movement_buttons,
 
             show_side_buttons: false,
-            show_movement_buttons: false,
+            show_movement_buttons: true,
             show_adjust_spin: false,
         }
     }
@@ -70,6 +78,7 @@ impl Gui {
 
         self.gui_menu.resize(wgpu_renderer.queue(), width, height);
         self.gui_side_buttons.resize(wgpu_renderer.queue(), width, height);
+        self.gui_movement_buttons.resize(wgpu_renderer.queue(), width, height);
     }
 
     pub fn mouse_moved(&mut self, x: u32, y: u32) -> bool
@@ -155,10 +164,17 @@ impl VertexTextureShaderDraw for Gui
 {
     fn draw<'a>(&'a self, render_pass: &mut wgpu::RenderPass<'a>) {
         
+        // menu
         self.gui_menu.draw(render_pass);
 
+        // side buttons
         if self.show_side_buttons {
             self.gui_side_buttons.draw(render_pass);
+        }
+
+        // movement buttons
+        if self.show_movement_buttons {
+            self.gui_movement_buttons.draw(render_pass);
         }
     }
 }
