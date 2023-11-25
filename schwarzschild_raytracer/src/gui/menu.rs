@@ -1,4 +1,4 @@
-
+//! The menu button
 
 use wgpu_renderer::{gui, vertex_texture_shader::VertexTextureShaderDraw};
 

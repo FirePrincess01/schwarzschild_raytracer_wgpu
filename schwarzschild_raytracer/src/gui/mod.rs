@@ -1,16 +1,14 @@
+//! The top level gui class, contains all gui elements
+
 use wgpu_renderer::{gui, vertex_texture_shader::VertexTextureShaderDraw};
 
-
-
 mod adjust_spin;
-mod movement;
+mod movement_buttons;
 mod side_buttons;
 mod menu;
 mod utils;
 
 pub use side_buttons::SideButtonId;
-
-
 
 pub struct Gui 
 {
