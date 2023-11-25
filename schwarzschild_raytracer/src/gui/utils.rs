@@ -1,7 +1,6 @@
+//! some general functions
+
 use wgpu_renderer::vertex_texture_shader;
-
-
-
 
 pub fn create_rectangle_vertices(width: u32, height: u32)
 -> [vertex_texture_shader::Vertex; 4]

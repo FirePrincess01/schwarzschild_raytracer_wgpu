@@ -1,4 +1,4 @@
-
+//! the buttons on the right bottom side (excluding the menu button)
 
 use wgpu_renderer::{gui, vertex_texture_shader::VertexTextureShaderDraw};
 
