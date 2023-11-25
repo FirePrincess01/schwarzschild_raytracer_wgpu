@@ -3,9 +3,10 @@ mod renderer;
 mod geometry;
 mod performance_monitor;
 mod textured_quad;
+mod gui;
 
 use wgpu_renderer::default_window;
-use winit::event::{WindowEvent, KeyboardInput, VirtualKeyCode, ElementState};
+use winit::event::{WindowEvent, KeyboardInput, VirtualKeyCode, ElementState, TouchPhase, MouseButton};
 
 #[cfg(target_arch="wasm32")]
 use wasm_bindgen::prelude::*;
@@ -20,6 +21,9 @@ struct SchwarzschildRaytracer {
 
     // data
     textured_quad: textured_quad::TexturedQuad,
+
+    // gui
+    gui: gui::Gui,
 }
 
 impl SchwarzschildRaytracer {
@@ -27,6 +31,8 @@ impl SchwarzschildRaytracer {
     {
         let size = window.inner_size();
         let scale_factor = window.scale_factor() as f32;
+        let width = size.width;
+        let height = size.height;
 
         let mut renderer = renderer::Renderer::new(window).await;
         let performance_monitor = performance_monitor::PerformanceMonitor::new(
@@ -37,6 +43,11 @@ impl SchwarzschildRaytracer {
             &mut renderer.wgpu_renderer, 
             &renderer.texture_bind_group_layout);
 
+        let gui = gui::Gui::new(&mut renderer.wgpu_renderer, 
+            &renderer.texture_bind_group_layout, 
+            width, 
+            height);
+
         Self {
             size,
             scale_factor,
@@ -45,6 +56,25 @@ impl SchwarzschildRaytracer {
             performance_monitor,
 
             textured_quad,
+
+            gui,
+        }
+    }
+
+    fn handle_gui_event(&self, 
+        gui_event: Option<wgpu_renderer::gui::RectanglePressedEvent<gui::SideButtonId>>)
+    {
+        match gui_event {
+            Some(event) => {
+                match event.rectangle_id {
+                    gui::SideButtonId::Reset => {},
+                    gui::SideButtonId::Still => {},
+                    gui::SideButtonId::FrozenFall => {},
+                    gui::SideButtonId::Fall => {},
+                    gui::SideButtonId::Orbit => {},
+                }
+            },
+            None => {},
         }
     }
 }
@@ -75,7 +105,11 @@ impl default_window::DefaultWindowApp for SchwarzschildRaytracer
 
     fn resize(&mut self, new_size: winit::dpi::PhysicalSize<u32>) {
         self.size = new_size;
+        let width = new_size.width;
+        let height = new_size.height;
+
         self.renderer.resize(new_size);
+        self.gui.resize(&mut self.renderer.wgpu_renderer, width, height);
     }
 
     fn update_scale_factor(&mut self, scale_factor: f32) {
@@ -124,6 +158,46 @@ impl default_window::DefaultWindowApp for SchwarzschildRaytracer
                     self.renderer.process_scroll(delta);
                     true
                 }
+                WindowEvent::MouseInput {
+                    button: MouseButton::Left,
+                    state,//ElementState::Pressed,
+                    ..
+                } => {
+                    let is_pressed = *state == ElementState::Pressed;
+                    
+                    let (consumed, gui_event) = self.gui.mouse_pressed(is_pressed);
+                    self.handle_gui_event(gui_event);
+                    consumed
+                } 
+                WindowEvent::CursorMoved { position, .. } => {
+                    let pos = apply_scale_factor(*position, self.scale_factor);
+    
+                    let consumed = self.gui.mouse_moved(pos.x as u32, pos.y as u32);
+                    consumed
+                },
+                WindowEvent::Touch(touch) => {
+                    let pos = apply_scale_factor(touch.location, self.scale_factor);
+    
+                    match touch.phase {
+                        TouchPhase::Started => {
+                            let _consumed = self.gui.mouse_moved(pos.x as u32, pos.y as u32);
+                            let (consumed, gui_event) = self.gui.mouse_pressed(true);
+                            self.handle_gui_event(gui_event);
+                        }
+                        TouchPhase::Ended => {
+                            let (_consumed, gui_event) = self.gui.mouse_pressed(false);
+                            self.handle_gui_event(gui_event);
+                        }
+                        TouchPhase::Cancelled => {
+                            let (_consumed, gui_event) = self.gui.mouse_pressed(false);
+                            self.handle_gui_event(gui_event);
+                        }
+                        TouchPhase::Moved => {
+                            let consumed = self.gui.mouse_moved(pos.x as u32, pos.y as u32);
+                        }
+                    }
+                    true
+                } 
                 _ => false,
             };
         self.performance_monitor.watch.stop(2);
@@ -134,6 +208,7 @@ impl default_window::DefaultWindowApp for SchwarzschildRaytracer
     fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
         self.renderer.render(
             &[&self.textured_quad],
+            &self.gui,
             &mut self.performance_monitor)
     }
 

@@ -17,6 +17,7 @@ pub struct Renderer
     pipeline_color: vertex_color_shader::Pipeline,
     pipeline_lines: vertex_color_shader::Pipeline,
     pipeline_texture: vertex_texture_shader::Pipeline,
+    pipeline_texture_gui: vertex_texture_shader::Pipeline,
 
     // camera
     camera: renderer::camera::Camera,
@@ -64,6 +65,13 @@ impl Renderer {
             surface_format
         );
 
+        // pipeline texture gui
+        let pipeline_texture_gui = vertex_texture_shader::Pipeline::new_gui(
+            wgpu_renderer.device(), 
+            &camera_bind_group_layout, 
+            &texture_bind_group_layout, 
+            surface_format
+        );
 
         // camera 
         let position = cgmath::Point3::new(0.0, 0.0, 0.0);
@@ -107,6 +115,7 @@ impl Renderer {
             pipeline_color,
             pipeline_lines,
             pipeline_texture,
+            pipeline_texture_gui,
 
             camera,
             camera_controller,
@@ -170,6 +179,7 @@ impl Renderer {
 
     pub fn render(&mut self, 
         meshes: &[&dyn VertexTextureShaderDraw],
+        mesh_gui: & impl VertexTextureShaderDraw,
         performance_monitor: &mut PerformanceMonitor) -> Result<(), wgpu::SurfaceError>
     {
         performance_monitor.watch.start(0);
@@ -215,6 +225,11 @@ impl Renderer {
             for mesh in meshes {
                 mesh.draw(&mut render_pass);
             }
+
+            // gui
+            self.pipeline_texture_gui.bind(&mut render_pass);
+            self.camera_uniform_orthographic_buffer.bind(&mut render_pass);
+            mesh_gui.draw(&mut render_pass);
     
             // performance monitor
             self.pipeline_lines.bind(&mut render_pass);
