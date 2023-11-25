@@ -181,7 +181,7 @@ impl default_window::DefaultWindowApp for SchwarzschildRaytracer
                     match touch.phase {
                         TouchPhase::Started => {
                             let _consumed = self.gui.mouse_moved(pos.x as u32, pos.y as u32);
-                            let (consumed, gui_event) = self.gui.mouse_pressed(true);
+                            let (_consumed, gui_event) = self.gui.mouse_pressed(true);
                             self.handle_gui_event(gui_event);
                         }
                         TouchPhase::Ended => {
@@ -193,7 +193,7 @@ impl default_window::DefaultWindowApp for SchwarzschildRaytracer
                             self.handle_gui_event(gui_event);
                         }
                         TouchPhase::Moved => {
-                            let consumed = self.gui.mouse_moved(pos.x as u32, pos.y as u32);
+                            let _consumed = self.gui.mouse_moved(pos.x as u32, pos.y as u32);
                         }
                     }
                     true
