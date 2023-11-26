@@ -37,21 +37,21 @@ impl  MovementButtons {
 
         // placement
         let horizontal_layout1 = gui::HorizontalLayout::new(vec![
-            gui::Rectangle::new(MovementButtonId::Up,
-                btn_width, btn_height, btn_boarder).into(),
-            gui::Rectangle::new(MovementButtonId::Forward,
-                btn_width, btn_height, btn_boarder).into(),
-            gui::Rectangle::new(MovementButtonId::Down,
-                btn_width, btn_height, btn_boarder).into(),
+            gui::Rectangle::new_raw(MovementButtonId::Up,
+                btn_width, btn_height, btn_boarder, true, true).into(),
+            gui::Rectangle::new_raw(MovementButtonId::Forward,
+                btn_width, btn_height, btn_boarder, true, true).into(),
+            gui::Rectangle::new_raw(MovementButtonId::Down,
+                btn_width, btn_height, btn_boarder, true, true).into(),
         ]);
 
         let horizontal_layout2 = gui::HorizontalLayout::new(vec![
-            gui::Rectangle::new(MovementButtonId::Left,
-                btn_width, btn_height, btn_boarder).into(),
-            gui::Rectangle::new(MovementButtonId::Back,
-                btn_width, btn_height, btn_boarder).into(),
-            gui::Rectangle::new(MovementButtonId::Right,
-                btn_width, btn_height, btn_boarder).into(),
+            gui::Rectangle::new_raw(MovementButtonId::Left,
+                btn_width, btn_height, btn_boarder, true, true).into(),
+            gui::Rectangle::new_raw(MovementButtonId::Back,
+                btn_width, btn_height, btn_boarder, true, true).into(),
+            gui::Rectangle::new_raw(MovementButtonId::Right,
+                btn_width, btn_height, btn_boarder, true, true).into(),
         ]);
 
         let vertical_layout =  gui::VerticalLayout::new(vec![

@@ -9,6 +9,15 @@ mod menu;
 mod utils;
 
 pub use side_buttons::SideButtonId;
+pub use movement_buttons::MovementButtonId;
+
+pub enum GuiEvent {
+    SideButton(SideButtonId),
+    MovementButton{
+        id: MovementButtonId,
+        pressed: bool,
+    }
+}
 
 pub struct Gui 
 {
@@ -104,7 +113,10 @@ impl Gui {
 
         // movement buttons
         if self.show_movement_buttons {
-
+            let (consumed, _events) = self.gui_movement_buttons.mouse_event(mouse_event);
+            if consumed {
+                return true;
+            }
         }
 
         // adjust_spin
@@ -116,7 +128,7 @@ impl Gui {
     }
 
     pub fn mouse_pressed(&mut self, pressed: bool) 
-        -> (bool, Option<gui::RectanglePressedEvent<side_buttons::SideButtonId>>)
+        -> (bool, Option<GuiEvent>)
     {
         let mouse_event = if pressed {
             gui::MouseEvent::Pressed
@@ -141,13 +153,28 @@ impl Gui {
         if self.show_side_buttons {
             let (consumed, event) = self.gui_side_buttons.mouse_event(mouse_event);
             if consumed {
-                return (true, event);
+                match event {
+                    Some(event) => { 
+                        let gui_event = GuiEvent::SideButton(event.rectangle_id);
+                        return (true, Some(gui_event)); 
+                    },
+                    None => { return (true, None) },
+                }
             }
         }
 
         // movement buttons
         if self.show_movement_buttons {
-
+            let (consumed, event) = self.gui_movement_buttons.mouse_event(mouse_event);
+            if consumed {
+                match event {
+                    Some(event) => { 
+                        let gui_event = GuiEvent::MovementButton{id: event.rectangle_id, pressed: event.pressed};
+                        return (true, Some(gui_event)); 
+                    },
+                    None => { return (true, None) },
+                }
+            }
         }
 
         // adjust_spin
