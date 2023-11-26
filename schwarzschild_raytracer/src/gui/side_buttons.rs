@@ -104,11 +104,11 @@ impl SideButtons {
             &[instance]);
 
         let textures = vec![
-            create_texture(wgpu_renderer, &texture_bind_group_layout, include_bytes!("assets/view.png")),
-            create_texture(wgpu_renderer, &texture_bind_group_layout, include_bytes!("assets/view.png")),
-            create_texture(wgpu_renderer, &texture_bind_group_layout, include_bytes!("assets/view.png")),
-            create_texture(wgpu_renderer, &texture_bind_group_layout, include_bytes!("assets/performance.png")),
-            create_texture(wgpu_renderer, &texture_bind_group_layout, include_bytes!("assets/mode.png")),
+            create_texture(wgpu_renderer, &texture_bind_group_layout, include_bytes!("assets/reset.png")),
+            create_texture(wgpu_renderer, &texture_bind_group_layout, include_bytes!("assets/still_mode.png")),
+            create_texture(wgpu_renderer, &texture_bind_group_layout, include_bytes!("assets/paused_falling_mode.png")),
+            create_texture(wgpu_renderer, &texture_bind_group_layout, include_bytes!("assets/falling_mode.png")),
+            create_texture(wgpu_renderer, &texture_bind_group_layout, include_bytes!("assets/orbit_mode.png")),
         ];
 
         let mut obj = Self {

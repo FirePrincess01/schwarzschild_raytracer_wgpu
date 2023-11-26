@@ -23,7 +23,7 @@ pub struct Renderer
     // wgpu_renderer
     pub wgpu_renderer: WgpuRenderer,
 
-    observer: simulation::observer::Observer,
+    pub observer: simulation::observer::Observer,
 
     pipeline_sphere: schwarzschild_sphere_shader::pipeline::Pipeline,
     pub ray_fan_bind_group_layout: ray_fan_bind_group_layout::RayFanBindGroupLayout,
@@ -248,15 +248,15 @@ impl Renderer {
                 sphere.draw(&mut render_pass);
             }
 
-            // gui
-            self.pipeline_texture_gui.bind(&mut render_pass);
-            self.camera_uniform_orthographic_buffer.bind(&mut render_pass);
-            mesh_gui.draw(&mut render_pass);
-    
             // performance monitor
             self.pipeline_lines.bind(&mut render_pass);
             self.camera_uniform_orthographic_buffer.bind(&mut render_pass);
             performance_monitor.draw(&mut render_pass);
+
+            // gui
+            self.pipeline_texture_gui.bind(&mut render_pass);
+            self.camera_uniform_orthographic_buffer.bind(&mut render_pass);
+            mesh_gui.draw(&mut render_pass);
         }
 
         self.wgpu_renderer.queue().submit(std::iter::once(encoder.finish()));

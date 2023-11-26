@@ -278,5 +278,11 @@ impl Observer {
     pub fn get_schwarz_r(&self) -> f64 {
         return self.schwarz_r;
     }
+
+    pub fn reset_to_start(&mut self) {
+        self.position = dvec3(25., 0., 0.);
+        self.camera = dvec2(std::f64::consts::PI, 0.);
+        self.start_frozen_fall();
+    }
 }
 

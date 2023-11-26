@@ -81,17 +81,17 @@ impl SchwarzschildRaytracer {
         }
     }
 
-    fn handle_gui_event(&self, 
+    fn handle_gui_event(&mut self, 
         gui_event: Option<wgpu_renderer::gui::RectanglePressedEvent<gui::SideButtonId>>)
     {
         match gui_event {
             Some(event) => {
                 match event.rectangle_id {
-                    gui::SideButtonId::Reset => {},
-                    gui::SideButtonId::Still => {},
-                    gui::SideButtonId::FrozenFall => {},
-                    gui::SideButtonId::Fall => {},
-                    gui::SideButtonId::Orbit => {},
+                    gui::SideButtonId::Reset => { self.renderer.observer.reset_to_start(); },
+                    gui::SideButtonId::Still => { self.renderer.observer.start_unmoving(); },
+                    gui::SideButtonId::FrozenFall => { self.renderer.observer.start_frozen_fall(); },
+                    gui::SideButtonId::Fall => { self.renderer.observer.start_orbit(0.); },
+                    gui::SideButtonId::Orbit => { self.renderer.observer.start_orbit(18.); },
                 }
             },
             None => {},
