@@ -23,6 +23,7 @@ struct SchwarzschildRaytracer {
     textured_quad: textured_quad::TexturedQuad,
 
     // gui
+    font: rusttype::Font<'static>,
     gui: gui::Gui,
 }
 
@@ -42,11 +43,16 @@ impl SchwarzschildRaytracer {
         let textured_quad = textured_quad::TexturedQuad::new(
             &mut renderer.wgpu_renderer, 
             &renderer.texture_bind_group_layout);
+        
+        // gui
 
+        let font_data = include_bytes!("../../wgpu_renderer/src/freefont/FreeMono.ttf");
+        let font = rusttype::Font::try_from_bytes(font_data as &[u8]).expect("Error constructing Font");
         let gui = gui::Gui::new(&mut renderer.wgpu_renderer, 
             &renderer.texture_bind_group_layout, 
             width, 
-            height);
+            height,
+            &font);
 
         Self {
             size,
@@ -57,21 +63,58 @@ impl SchwarzschildRaytracer {
 
             textured_quad,
 
+            font,
             gui,
         }
     }
 
-    fn handle_gui_event(&self, 
-        gui_event: Option<wgpu_renderer::gui::RectanglePressedEvent<gui::SideButtonId>>)
+    fn handle_gui_event(&mut self, 
+        gui_event: Option<gui::GuiEvent>)
     {
         match gui_event {
-            Some(event) => {
-                match event.rectangle_id {
-                    gui::SideButtonId::Reset => {},
-                    gui::SideButtonId::Still => {},
-                    gui::SideButtonId::FrozenFall => {},
-                    gui::SideButtonId::Fall => {},
-                    gui::SideButtonId::Orbit => {},
+            Some(gui_event) => {
+                match gui_event {
+                    gui::GuiEvent::SideButton( id ) => {
+                        match id {
+                            gui::SideButtonId::Reset => {},
+                            gui::SideButtonId::Still => {},
+                            gui::SideButtonId::FrozenFall => {},
+                            gui::SideButtonId::Fall => {},
+                            gui::SideButtonId::Orbit => {},
+                        }
+                    },
+                    gui::GuiEvent::MovementButton { id, pressed } => {
+                        match id {
+                            gui::MovementButtonId::Up => {
+                                self.gui.adjust_spin_set_colors(true, false, false);
+                            },
+                            gui::MovementButtonId::Forward => {
+                                self.gui.adjust_spin_set_colors(false, true, false);
+                            },
+                            gui::MovementButtonId::Down => {
+                                self.gui.adjust_spin_set_colors(false, false, true);
+                            },  
+                            gui::MovementButtonId::Left => {
+                                let value = if pressed { 10 } else { 11 };
+                                self.gui.adjust_spin_set_value(&mut self.renderer.wgpu_renderer, &self.font, value);
+                            },
+                            gui::MovementButtonId::Back => {
+                                let value = if pressed { 20 } else { 21 };
+                                self.gui.adjust_spin_set_value(&mut self.renderer.wgpu_renderer, &self.font, value);
+                            },
+                            gui::MovementButtonId::Right => {
+                                let value = if pressed { 30 } else { 31 };
+                                self.gui.adjust_spin_set_value(&mut self.renderer.wgpu_renderer, &self.font, value);
+                            },
+                        }
+                    },
+                    gui::GuiEvent::AdjustSpin(id) => {
+                        match id {
+                            gui::AdjustSpinButtonId::Confirm => {
+                                self.gui.adjust_spin_set_colors(true, true, true);
+                            },
+                        }
+                    },
                 }
             },
             None => {},
@@ -181,7 +224,7 @@ impl default_window::DefaultWindowApp for SchwarzschildRaytracer
                     match touch.phase {
                         TouchPhase::Started => {
                             let _consumed = self.gui.mouse_moved(pos.x as u32, pos.y as u32);
-                            let (consumed, gui_event) = self.gui.mouse_pressed(true);
+                            let (_consumed, gui_event) = self.gui.mouse_pressed(true);
                             self.handle_gui_event(gui_event);
                         }
                         TouchPhase::Ended => {
@@ -193,7 +236,7 @@ impl default_window::DefaultWindowApp for SchwarzschildRaytracer
                             self.handle_gui_event(gui_event);
                         }
                         TouchPhase::Moved => {
-                            let consumed = self.gui.mouse_moved(pos.x as u32, pos.y as u32);
+                            let _consumed = self.gui.mouse_moved(pos.x as u32, pos.y as u32);
                         }
                     }
                     true

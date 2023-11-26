@@ -15,8 +15,8 @@ use image;
 
 pub struct TexturedQuad {
     // host data
-    texture_rgba: image::ImageBuffer<image::Rgba<u8>, Vec<u8>>,
-    instance: Instance,
+    _texture_rgba: image::ImageBuffer<image::Rgba<u8>, Vec<u8>>,
+    _instance: Instance,
 
     // device data
     vertex_buffer: VertexBuffer,
@@ -51,8 +51,8 @@ impl TexturedQuad {
         let instance_buffer = InstanceBuffer::new(wgpu_renderer.device(), &[instance_raw]);
     
         Self {
-            texture_rgba,
-            instance,
+            _texture_rgba: texture_rgba,
+            _instance: instance,
 
             vertex_buffer,
             index_buffer,
@@ -87,14 +87,14 @@ impl TexturedQuad {
         INDICES
     }
 
-    pub fn update_texture(&mut self, queue: &wgpu::Queue) 
+    pub fn _update_texture(&mut self, queue: &wgpu::Queue) 
     {
-        self.texture.write(queue, &self.texture_rgba);
+        self.texture.write(queue, &self._texture_rgba);
     }
 
-    pub fn update_instance_buffer(&mut self, queue: &wgpu::Queue)
+    pub fn _update_instance_buffer(&mut self, queue: &wgpu::Queue)
     {
-        let instance_raw = self.instance.to_raw();
+        let instance_raw = self._instance.to_raw();
         self.instance_buffer.update(queue, &[instance_raw]);
     }
 

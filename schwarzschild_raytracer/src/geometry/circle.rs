@@ -4,13 +4,14 @@ use std::f32::consts::PI;
 use wgpu_renderer::vertex_color_shader::Vertex as Vertex;
 use wgpu_renderer::vertex_color_shader::Color as Color;
 
-
+#[allow(unused)]
 pub struct Circle {
     pub vertices: Vec<Vertex>,
     pub colors: Vec<Color>,
     pub indices: Vec<u32>,
 }
 
+#[allow(unused)]
 impl Circle {
     pub fn new(r: f32, n: usize) -> Self
     {

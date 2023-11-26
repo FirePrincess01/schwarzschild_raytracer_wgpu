@@ -31,7 +31,7 @@ impl Menu {
 
         // placement
         let vertical_layout =  gui::VerticalLayout::new(vec![
-            gui::GuiElement::Rectangle(gui::Rectangle::new(MenuId::Menu,
+            gui::GuiElement::Rectangle(gui::Rectangle::new_btn(MenuId::Menu,
                 btn_width, btn_height, btn_boarder)),
         ]);
 

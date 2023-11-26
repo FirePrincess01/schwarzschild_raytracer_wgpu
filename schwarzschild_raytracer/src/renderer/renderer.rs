@@ -14,7 +14,7 @@ pub struct Renderer
     pub camera_bind_group_layout: vertex_color_shader::CameraBindGroupLayout,
     pub texture_bind_group_layout: vertex_texture_shader::TextureBindGroupLayout,
 
-    pipeline_color: vertex_color_shader::Pipeline,
+    _pipeline_color: vertex_color_shader::Pipeline,
     pipeline_lines: vertex_color_shader::Pipeline,
     pipeline_texture: vertex_texture_shader::Pipeline,
     pipeline_texture_gui: vertex_texture_shader::Pipeline,
@@ -37,9 +37,8 @@ impl Renderer {
         // wgpu renderer
         let mut wgpu_renderer = WgpuRenderer::new(window).await; 
         let surface_format = wgpu_renderer.config().format;
-        let surface_width = wgpu_renderer.config().width;
-        let surface_height = wgpu_renderer.config().height;
-        let surface_format = wgpu_renderer.config().format;
+        let _surface_width = wgpu_renderer.config().width;
+        let _surface_height = wgpu_renderer.config().height;
         
         // pipeline color
         let camera_bind_group_layout = vertex_color_shader::CameraBindGroupLayout::new(wgpu_renderer.device());
@@ -112,7 +111,7 @@ impl Renderer {
             camera_bind_group_layout,
             texture_bind_group_layout,
 
-            pipeline_color,
+            _pipeline_color: pipeline_color,
             pipeline_lines,
             pipeline_texture,
             pipeline_texture_gui,
@@ -226,15 +225,15 @@ impl Renderer {
                 mesh.draw(&mut render_pass);
             }
 
-            // gui
-            self.pipeline_texture_gui.bind(&mut render_pass);
-            self.camera_uniform_orthographic_buffer.bind(&mut render_pass);
-            mesh_gui.draw(&mut render_pass);
-    
             // performance monitor
             self.pipeline_lines.bind(&mut render_pass);
             self.camera_uniform_orthographic_buffer.bind(&mut render_pass);
             performance_monitor.draw(&mut render_pass);
+
+            // gui
+            self.pipeline_texture_gui.bind(&mut render_pass);
+            self.camera_uniform_orthographic_buffer.bind(&mut render_pass);
+            mesh_gui.draw(&mut render_pass);
         }
 
         self.wgpu_renderer.queue().submit(std::iter::once(encoder.finish()));

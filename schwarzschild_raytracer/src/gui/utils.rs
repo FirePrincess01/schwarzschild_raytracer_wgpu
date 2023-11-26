@@ -36,6 +36,16 @@ pub fn create_texture(wgpu_renderer: &mut impl wgpu_renderer::renderer::WgpuRend
     let texture_image = image::load_from_memory(texture_bytes).unwrap();
     let texture_rgba = texture_image.to_rgba8();
 
+    create_texture_rgba(wgpu_renderer, 
+        &texture_bind_group_layout, 
+        &texture_rgba)
+}
+
+pub fn create_texture_rgba(wgpu_renderer: &mut impl wgpu_renderer::renderer::WgpuRendererInterface,
+    texture_bind_group_layout: &vertex_texture_shader::TextureBindGroupLayout,
+    texture_rgba: &image::ImageBuffer<image::Rgba<u8>, Vec<u8>>,
+) -> wgpu_renderer::vertex_texture_shader::Texture
+{
     let texture = vertex_texture_shader::Texture::new(
         wgpu_renderer, 
         &texture_bind_group_layout, 
@@ -44,6 +54,7 @@ pub fn create_texture(wgpu_renderer: &mut impl wgpu_renderer::renderer::WgpuRend
 
     texture
 }
+
 
 pub fn update_instance(queue: &wgpu::Queue, 
     mesh: &mut wgpu_renderer::vertex_texture_shader::Mesh,
