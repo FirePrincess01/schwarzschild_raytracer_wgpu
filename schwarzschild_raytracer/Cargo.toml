@@ -28,6 +28,7 @@ glam = "0.24"
 wgpu_renderer = { path = "../wgpu_renderer" }
 # other  
 log = "0.4"
+rusttype = "0.9"
 
 [dependencies.image]
 version = "0.24"

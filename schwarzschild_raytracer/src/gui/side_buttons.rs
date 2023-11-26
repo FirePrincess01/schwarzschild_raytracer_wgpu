@@ -39,15 +39,15 @@ impl SideButtons {
 
         // placement
         let vertical_layout =  gui::VerticalLayout::new(vec![
-            gui::GuiElement::Rectangle(gui::Rectangle::new(SideButtonId::Reset,
+            gui::GuiElement::Rectangle(gui::Rectangle::new_btn(SideButtonId::Reset,
                 btn_width, btn_height, btn_boarder)),
-            gui::GuiElement::Rectangle(gui::Rectangle::new(SideButtonId::Still,
+            gui::GuiElement::Rectangle(gui::Rectangle::new_btn(SideButtonId::Still,
                 btn_width, btn_height, btn_boarder)),
-            gui::GuiElement::Rectangle(gui::Rectangle::new(SideButtonId::FrozenFall,
+            gui::GuiElement::Rectangle(gui::Rectangle::new_btn(SideButtonId::FrozenFall,
                 btn_width, btn_height, btn_boarder)),
-            gui::GuiElement::Rectangle(gui::Rectangle::new(SideButtonId::Fall,
+            gui::GuiElement::Rectangle(gui::Rectangle::new_btn(SideButtonId::Fall,
                 btn_width, btn_height, btn_boarder)),
-            gui::GuiElement::Rectangle(gui::Rectangle::new(SideButtonId::Orbit,
+            gui::GuiElement::Rectangle(gui::Rectangle::new_btn(SideButtonId::Orbit,
                 btn_width, btn_height, btn_boarder)),
 
         ]);

@@ -10,13 +10,15 @@ mod utils;
 
 pub use side_buttons::SideButtonId;
 pub use movement_buttons::MovementButtonId;
+pub use adjust_spin::AdjustSpinButtonId;
 
 pub enum GuiEvent {
     SideButton(SideButtonId),
     MovementButton{
         id: MovementButtonId,
         pressed: bool,
-    }
+    },
+    AdjustSpin(AdjustSpinButtonId),
 }
 
 pub struct Gui 
@@ -27,6 +29,7 @@ pub struct Gui
     gui_menu: menu::Menu,
     gui_side_buttons: side_buttons::SideButtons,
     gui_movement_buttons: movement_buttons::MovementButtons,
+    gui_adjust_spin: adjust_spin::AdjustSpin,
 
     show_side_buttons: bool,
     show_movement_buttons: bool,
@@ -37,7 +40,8 @@ impl Gui {
     pub fn new(wgpu_renderer: &mut impl wgpu_renderer::renderer::WgpuRendererInterface, 
         texture_bind_group_layout: &wgpu_renderer::vertex_texture_shader::TextureBindGroupLayout,
         width: u32, 
-        height: u32) -> Self
+        height: u32,
+        font: &rusttype::Font) -> Self
     {
         let gui_menu = menu::Menu::new(
             wgpu_renderer, 
@@ -57,6 +61,13 @@ impl Gui {
             width, 
             height);
 
+        let gui_adjust_spin = adjust_spin::AdjustSpin::new(
+            wgpu_renderer, 
+            texture_bind_group_layout, 
+            width, 
+            height,
+            font);
+
         Self {
             width,
             height,
@@ -64,10 +75,11 @@ impl Gui {
             gui_menu,
             gui_side_buttons,
             gui_movement_buttons,
+            gui_adjust_spin,
 
             show_side_buttons: false,
             show_movement_buttons: true,
-            show_adjust_spin: false,
+            show_adjust_spin: true,
         }
     }
 
@@ -88,6 +100,7 @@ impl Gui {
         self.gui_menu.resize(wgpu_renderer.queue(), width, height);
         self.gui_side_buttons.resize(wgpu_renderer.queue(), width, height);
         self.gui_movement_buttons.resize(wgpu_renderer.queue(), width, height);
+        self.gui_adjust_spin.resize(wgpu_renderer.queue(), width, height);
     }
 
     pub fn mouse_moved(&mut self, x: u32, y: u32) -> bool
@@ -121,7 +134,10 @@ impl Gui {
 
         // adjust_spin
         if self.show_adjust_spin {
-
+            let (consumed, _events) = self.gui_adjust_spin.mouse_event(mouse_event);
+            if consumed {
+                return true;
+            }
         }
 
         false
@@ -179,11 +195,32 @@ impl Gui {
 
         // adjust_spin
         if self.show_adjust_spin {
-
+            let (consumed, event) = self.gui_adjust_spin.mouse_event(mouse_event);
+            if consumed {
+                match event {
+                    Some(event) => { 
+                        let gui_event = GuiEvent::AdjustSpin(event.rectangle_id);
+                        return (true, Some(gui_event)); 
+                    },
+                    None => { return (true, None) },
+                }
+            }
         }
 
-
         (false, None)
+    }
+
+    pub fn adjust_spin_set_value<'a>(&mut self, 
+        wgpu_renderer: &mut impl wgpu_renderer::renderer::WgpuRendererInterface, 
+        font: &'a rusttype::Font, 
+        value: u32) 
+    {
+        self.gui_adjust_spin.set_value(wgpu_renderer, font, value);
+    }
+
+    pub fn adjust_spin_set_colors(&mut self, red: bool, orange: bool, green: bool) 
+    {
+        self.gui_adjust_spin.set_colors(red, orange, green);
     }
 }
 
@@ -202,6 +239,11 @@ impl VertexTextureShaderDraw for Gui
         // movement buttons
         if self.show_movement_buttons {
             self.gui_movement_buttons.draw(render_pass);
+        }
+
+        // adjust_spin
+        if self.show_adjust_spin {
+            self.gui_adjust_spin.draw(render_pass);
         }
     }
 }
