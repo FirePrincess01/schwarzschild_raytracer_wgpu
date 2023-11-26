@@ -1295,6 +1295,7 @@ dependencies = [
  "instant",
  "log",
  "pollster",
+ "rusttype",
  "wasm-bindgen",
  "wasm-bindgen-futures",
  "web-sys",

@@ -2,13 +2,14 @@
 use wgpu_renderer::vertex_color_shader::Vertex as Vertex;
 use wgpu_renderer::vertex_color_shader::Color as Color;
 
-
+#[allow(unused)]
 pub struct Quad {
     pub vertices: Vec<Vertex>,
     pub colors: Vec<Color>,
     pub indices: Vec<u32>,
 }
 
+#[allow(unused)]
 impl Quad {
     pub fn new(size: f32) -> Self
     {
