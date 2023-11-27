@@ -79,7 +79,7 @@ impl Gui {
 
             show_side_buttons: false,
             show_movement_buttons: true,
-            show_adjust_spin: true,
+            show_adjust_spin: false,
         }
     }
 
@@ -171,6 +171,9 @@ impl Gui {
             if consumed {
                 match event {
                     Some(event) => { 
+                        if event.rectangle_id ==  side_buttons::SideButtonId::Orbit {
+                            self.show_adjust_spin = true;
+                        }
                         let gui_event = GuiEvent::SideButton(event.rectangle_id);
                         return (true, Some(gui_event)); 
                     },
@@ -199,6 +202,9 @@ impl Gui {
             if consumed {
                 match event {
                     Some(event) => { 
+                        if event.rectangle_id ==  adjust_spin::AdjustSpinButtonId::Confirm {
+                            self.show_adjust_spin = false;
+                        }
                         let gui_event = GuiEvent::AdjustSpin(event.rectangle_id);
                         return (true, Some(gui_event)); 
                     },
