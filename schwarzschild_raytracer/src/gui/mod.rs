@@ -103,7 +103,7 @@ impl Gui {
             SideButtonId::Orbit => {
                 self.show_adjust_spin = true;
             },
-            .. => {}
+            _ => {}
         }
     }
 

@@ -117,22 +117,32 @@ impl SchwarzschildRaytracer {
                     gui::PressedEvent::MovementButton(id) => {
                         match id {
                             gui::MovementButtonId::Up => {
-                                
+                                self.renderer.process_keyboard(VirtualKeyCode::Space, ElementState::Pressed);
                             },
                             gui::MovementButtonId::Forward => {
-                                
+                                if self.rotation_selection_mode {
+                                    self.rotation_delta += 1.;
+                                }
+                                else {
+                                    self.renderer.process_keyboard(VirtualKeyCode::W, ElementState::Pressed);
+                                }
                             },
                             gui::MovementButtonId::Down => {
-
+                                self.renderer.process_keyboard(VirtualKeyCode::LShift, ElementState::Pressed);
                             },  
                             gui::MovementButtonId::Left => {
-                                self.gui.adjust_spin_set_value(&mut self.renderer.wgpu_renderer, &self.font, 11);
+                                self.renderer.process_keyboard(VirtualKeyCode::A, ElementState::Pressed);
                             },
                             gui::MovementButtonId::Back => {
-                                self.gui.adjust_spin_set_value(&mut self.renderer.wgpu_renderer, &self.font, 21);
+                                if self.rotation_selection_mode {
+                                    self.rotation_delta -= 1.;
+                                }
+                                else {
+                                    self.renderer.process_keyboard(VirtualKeyCode::S, ElementState::Pressed);
+                                }
                             },
                             gui::MovementButtonId::Right => {
-                                self.gui.adjust_spin_set_value(&mut self.renderer.wgpu_renderer, &self.font, 31);
+                                self.renderer.process_keyboard(VirtualKeyCode::D, ElementState::Pressed);
                             },
                         }
                     },
@@ -156,39 +166,37 @@ impl SchwarzschildRaytracer {
                                 self.rotation_selection_mode = true
                             },
                             gui::SideButtonId::PerformanceMonitor => { self.performance_monitor.show = !self.performance_monitor.show; },
-                            
                         }
                     },
-                    gui::GuiEvent::MovementButton { id, pressed } => {
-                        let pressed_released = if pressed {ElementState::Pressed} else {ElementState::Released};
+                    gui::ReleasedEvent::MovementButton(id) => {
                         match id {
                             gui::MovementButtonId::Up => {
-                                self.renderer.process_keyboard(VirtualKeyCode::Space, pressed_released);
+                                self.renderer.process_keyboard(VirtualKeyCode::Space, ElementState::Released);
                             },
                             gui::MovementButtonId::Forward => {
                                 if self.rotation_selection_mode {
-                                    self.rotation_delta += if pressed { 1. } else { -1. };
+                                    self.rotation_delta += -1.;
                                 }
                                 else {
-                                    self.renderer.process_keyboard(VirtualKeyCode::W, pressed_released);
+                                    self.renderer.process_keyboard(VirtualKeyCode::W, ElementState::Released);
                                 }
                             },
                             gui::MovementButtonId::Down => {
-                                self.renderer.process_keyboard(VirtualKeyCode::LShift, pressed_released);
+                                self.renderer.process_keyboard(VirtualKeyCode::LShift, ElementState::Released);
                             },  
                             gui::MovementButtonId::Left => {
-                                self.renderer.process_keyboard(VirtualKeyCode::A, pressed_released);
+                                self.renderer.process_keyboard(VirtualKeyCode::A, ElementState::Released);
                             },
                             gui::MovementButtonId::Back => {
                                 if self.rotation_selection_mode {
-                                    self.rotation_delta -= if pressed { 1. } else { -1. };
+                                    self.rotation_delta -= -1.;
                                 }
                                 else {
-                                    self.renderer.process_keyboard(VirtualKeyCode::S, pressed_released);
+                                    self.renderer.process_keyboard(VirtualKeyCode::S, ElementState::Released);
                                 }
                             },
                             gui::MovementButtonId::Right => {
-                                self.renderer.process_keyboard(VirtualKeyCode::D, pressed_released);
+                                self.renderer.process_keyboard(VirtualKeyCode::D, ElementState::Released);
                             },
                         }
                     },
@@ -306,9 +314,10 @@ impl default_window::DefaultWindowApp for SchwarzschildRaytracer
                 }
                 WindowEvent::CursorMoved { position, .. } => {
                     let pos = apply_scale_factor(*position, self.scale_factor);
-                    let consumed = self.gui.mouse_moved(pos.x as u32, pos.y as u32);
+                    let res = self.gui.mouse_moved(pos.x as u32, pos.y as u32);
+                    self.handle_gui_event(&res);
 
-                    if !consumed {
+                    if !res.consumed {
                         self.renderer.process_mouse_position(pos.x, pos.y);
                     }
                     true
@@ -320,10 +329,10 @@ impl default_window::DefaultWindowApp for SchwarzschildRaytracer
                 } => {
                     let is_pressed = *state == ElementState::Pressed;
                     
-                    let (consumed, gui_event) = self.gui.mouse_pressed(is_pressed);
-                    self.handle_gui_event(gui_event);
+                    let res = self.gui.mouse_pressed(is_pressed);
+                    self.handle_gui_event(&res);
 
-                    if !consumed {
+                    if !res.consumed {
                         self.renderer.set_mouse_pressed(*state == ElementState::Pressed);
                     }
                     true
@@ -333,31 +342,33 @@ impl default_window::DefaultWindowApp for SchwarzschildRaytracer
     
                     match touch.phase {
                         TouchPhase::Started => {
-                            let _consumed = self.gui.mouse_moved(pos.x as u32, pos.y as u32);
-                            let (consumed, gui_event) = self.gui.mouse_pressed(true);
-                            self.handle_gui_event(gui_event);
+                            let res = self.gui.mouse_moved(pos.x as u32, pos.y as u32);
+                            self.handle_gui_event(&res);
+                            let res = self.gui.mouse_pressed(true);
+                            self.handle_gui_event(&res);
     
-                            if !consumed {
+                            if !res.consumed {
                                 self.renderer.process_mouse_position(pos.x as f64, pos.y as f64);
                                 self.renderer.set_mouse_pressed(true);
                             }
                         }
                         TouchPhase::Ended => {
-                            let (_consumed, gui_event) = self.gui.mouse_pressed(false);
-                            self.handle_gui_event(gui_event);
+                            let res = self.gui.mouse_pressed(false);
+                            self.handle_gui_event(&res);
     
                             self.renderer.set_mouse_pressed(false);
                         }
                         TouchPhase::Cancelled => {
-                            let (_consumed, gui_event) = self.gui.mouse_pressed(false);
-                            self.handle_gui_event(gui_event);
+                            let res = self.gui.mouse_pressed(false);
+                            self.handle_gui_event(&res);
                             
                             self.renderer.set_mouse_pressed(false);
                         }
                         TouchPhase::Moved => {
-                            let consumed = self.gui.mouse_moved(pos.x as u32, pos.y as u32);
+                            let res = self.gui.mouse_moved(pos.x as u32, pos.y as u32);
+                            self.handle_gui_event(&res);
 
-                            if !consumed {
+                            if !res.consumed {
                                 self.renderer.process_mouse_position(pos.x as f64, pos.y as f64);
                             }
                         }

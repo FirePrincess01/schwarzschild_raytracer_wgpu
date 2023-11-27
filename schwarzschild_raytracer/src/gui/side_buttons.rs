@@ -52,7 +52,7 @@ impl SideButtons {
                 btn_width, btn_height, btn_boarder)),
             gui::GuiElement::Rectangle(gui::Rectangle::new_btn(SideButtonId::Orbit, SideButtonId::Orbit,
                 btn_width, btn_height, btn_boarder)),
-            gui::GuiElement::Rectangle(gui::Rectangle::new_btn(SideButtonId::PerformanceMonitor,
+            gui::GuiElement::Rectangle(gui::Rectangle::new_btn(SideButtonId::PerformanceMonitor, SideButtonId::PerformanceMonitor,
                 btn_width, btn_height, btn_boarder)),
         ]);
 
