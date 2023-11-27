@@ -5,6 +5,7 @@ use wgpu_renderer::{gui::{self, NoId}, vertex_texture_shader::VertexTextureShade
 use super::utils::{create_rectangle_vertices, create_rectangle_indices, update_instance, create_texture};
 
 #[derive(Copy, Clone)]
+#[derive(PartialEq)]
 pub enum SideButtonId 
 {
     Reset,
@@ -12,6 +13,7 @@ pub enum SideButtonId
     FrozenFall,
     Fall,
     Orbit,
+    PerformanceMonitor,
 }
 
 pub struct SideButtons
@@ -23,6 +25,7 @@ pub struct SideButtons
     mesh_frozen_fall: wgpu_renderer::vertex_texture_shader::Mesh,
     mesh_fall: wgpu_renderer::vertex_texture_shader::Mesh,
     mesh_orbit: wgpu_renderer::vertex_texture_shader::Mesh,
+    mesh_performance_monitor: wgpu_renderer::vertex_texture_shader::Mesh,
 
     textures: Vec<wgpu_renderer::vertex_texture_shader::Texture>,
 }
@@ -49,7 +52,8 @@ impl SideButtons {
                 btn_width, btn_height, btn_boarder)),
             gui::GuiElement::Rectangle(gui::Rectangle::new_btn(SideButtonId::Orbit, SideButtonId::Orbit,
                 btn_width, btn_height, btn_boarder)),
-
+            gui::GuiElement::Rectangle(gui::Rectangle::new_btn(SideButtonId::PerformanceMonitor,
+                btn_width, btn_height, btn_boarder)),
         ]);
 
         let placement = gui::Gui::new(width,
@@ -103,12 +107,20 @@ impl SideButtons {
             &indices, 
             &[instance]);
 
+        let mesh_performance_monitor = wgpu_renderer::vertex_texture_shader::Mesh::new(
+            wgpu_renderer.device(), 
+            &vertices, 
+            5, 
+            &indices, 
+            &[instance]);
+
         let textures = vec![
-            create_texture(wgpu_renderer, &texture_bind_group_layout, include_bytes!("assets/view.png")),
-            create_texture(wgpu_renderer, &texture_bind_group_layout, include_bytes!("assets/view.png")),
-            create_texture(wgpu_renderer, &texture_bind_group_layout, include_bytes!("assets/view.png")),
+            create_texture(wgpu_renderer, &texture_bind_group_layout, include_bytes!("assets/reset.png")),
+            create_texture(wgpu_renderer, &texture_bind_group_layout, include_bytes!("assets/still_mode.png")),
+            create_texture(wgpu_renderer, &texture_bind_group_layout, include_bytes!("assets/paused_falling_mode.png")),
+            create_texture(wgpu_renderer, &texture_bind_group_layout, include_bytes!("assets/falling_mode.png")),
+            create_texture(wgpu_renderer, &texture_bind_group_layout, include_bytes!("assets/orbit_mode.png")),
             create_texture(wgpu_renderer, &texture_bind_group_layout, include_bytes!("assets/performance.png")),
-            create_texture(wgpu_renderer, &texture_bind_group_layout, include_bytes!("assets/mode.png")),
         ];
 
         let mut obj = Self {
@@ -119,6 +131,7 @@ impl SideButtons {
             mesh_frozen_fall,
             mesh_fall,
             mesh_orbit,
+            mesh_performance_monitor,
 
             textures,
         };
@@ -140,6 +153,7 @@ impl SideButtons {
                 SideButtonId::FrozenFall => update_instance(queue, &mut self.mesh_frozen_fall, event.x, event.y),
                 SideButtonId::Fall => update_instance(queue, &mut self.mesh_fall, event.x, event.y),
                 SideButtonId::Orbit => update_instance(queue, &mut self.mesh_orbit, event.x, event.y),
+                SideButtonId::PerformanceMonitor => update_instance(queue, &mut self.mesh_performance_monitor, event.x, event.y),
             }
         }
     }
@@ -159,5 +173,6 @@ impl VertexTextureShaderDraw for SideButtons
         self.mesh_frozen_fall.draw(render_pass, &self.textures);
         self.mesh_fall.draw(render_pass, &self.textures);
         self.mesh_orbit.draw(render_pass, &self.textures);
+        self.mesh_performance_monitor.draw(render_pass, &self.textures);
     }
 }

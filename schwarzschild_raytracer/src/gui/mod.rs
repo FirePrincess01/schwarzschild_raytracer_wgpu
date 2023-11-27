@@ -86,7 +86,7 @@ impl Gui {
 
             show_side_buttons: false,
             show_movement_buttons: true,
-            show_adjust_spin: true,
+            show_adjust_spin: false,
         }
     }
 
@@ -94,6 +94,23 @@ impl Gui {
         match event {
             menu::MenuId::Menu => {
                 self.show_side_buttons = !self.show_side_buttons;
+            },
+        }
+    }
+
+    fn handle_side_button_event(&mut self, event: side_buttons::SideButtonId) {
+        match event {
+            SideButtonId::Orbit => {
+                self.show_adjust_spin = true;
+            },
+            .. => {}
+        }
+    }
+
+    fn handle_adjust_spin_event(&mut self, event: adjust_spin::AdjustSpinButtonId) {
+        match event {
+            AdjustSpinButtonId::Confirm => {
+                self.show_adjust_spin = false;
             },
         }
     }
@@ -127,7 +144,10 @@ impl Gui {
         if self.show_side_buttons {
             let res = self.gui_side_buttons.mouse_event(mouse_event);
             match res.released_event {
-                Some(event) => { gui_result.released_event = Some(ReleasedEvent::SideButton(event)); },
+                Some(event) => { 
+                    self.handle_side_button_event(event);
+                    gui_result.released_event = Some(ReleasedEvent::SideButton(event)); 
+                },
                 None => {}
             }
             gui_result.consumed = gui_result.consumed || res.consumed;
@@ -151,7 +171,10 @@ impl Gui {
         if self.show_adjust_spin {
             let res = self.gui_adjust_spin.mouse_event(mouse_event);
             match res.released_event {
-                Some(event) => { gui_result.released_event = Some(ReleasedEvent::AdjustSpin(event)); },
+                Some(event) => { 
+                    self.handle_adjust_spin_event(event);
+                    gui_result.released_event = Some(ReleasedEvent::AdjustSpin(event)); 
+                },
                 None => {}
             }
             gui_result.consumed = gui_result.consumed || res.consumed;
