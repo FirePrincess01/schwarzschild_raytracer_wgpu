@@ -1,6 +1,6 @@
 //! The top level gui class, contains all gui elements
 
-use wgpu_renderer::{gui, vertex_texture_shader::VertexTextureShaderDraw};
+use wgpu_renderer::{gui::{self, MouseEvent}, vertex_texture_shader::VertexTextureShaderDraw};
 
 mod adjust_spin;
 mod movement_buttons;
@@ -12,13 +12,20 @@ pub use side_buttons::SideButtonId;
 pub use movement_buttons::MovementButtonId;
 pub use adjust_spin::AdjustSpinButtonId;
 
-pub enum GuiEvent {
+pub enum PressedEvent {
+    MovementButton(MovementButtonId),
+}
+
+pub enum ReleasedEvent {
     SideButton(SideButtonId),
-    MovementButton{
-        id: MovementButtonId,
-        pressed: bool,
-    },
+    MovementButton(MovementButtonId),
     AdjustSpin(AdjustSpinButtonId),
+}
+
+pub struct GuiResult {
+    pub pressed_event: Option<PressedEvent>,
+    pub released_event: Option<ReleasedEvent>,
+    pub consumed: bool,
 }
 
 pub struct Gui 
@@ -83,10 +90,27 @@ impl Gui {
         }
     }
 
-    fn handle_gui_menu_event(&mut self, event: gui::RectanglePressedEvent<menu::MenuId>) {
-        match event.rectangle_id {
+    fn handle_gui_menu_event(&mut self, event: menu::MenuId) {
+        match event {
             menu::MenuId::Menu => {
                 self.show_side_buttons = !self.show_side_buttons;
+            },
+        }
+    }
+
+    fn handle_side_button_event(&mut self, event: side_buttons::SideButtonId) {
+        match event {
+            SideButtonId::Orbit => {
+                self.show_adjust_spin = true;
+            },
+            _ => {}
+        }
+    }
+
+    fn handle_adjust_spin_event(&mut self, event: adjust_spin::AdjustSpinButtonId) {
+        match event {
+            AdjustSpinButtonId::Confirm => {
+                self.show_adjust_spin = false;
             },
         }
     }
@@ -103,48 +127,74 @@ impl Gui {
         self.gui_adjust_spin.resize(wgpu_renderer.queue(), width, height);
     }
 
-    pub fn mouse_moved(&mut self, x: u32, y: u32) -> bool
+    fn mouse_event(&mut self, mouse_event: MouseEvent) -> GuiResult
+    {
+        let mut gui_result = GuiResult{ pressed_event: None, released_event: None, consumed: false };
+
+        // menu
+        let res: gui::MouseEventResult<gui::NoId, menu::MenuId> = self.gui_menu.mouse_event(mouse_event);
+        match res.released_event {
+            Some(event) => self.handle_gui_menu_event(event),
+            None => {},
+        }
+        gui_result.consumed = gui_result.consumed || res.consumed;
+
+
+        // side buttons
+        if self.show_side_buttons {
+            let res = self.gui_side_buttons.mouse_event(mouse_event);
+            match res.released_event {
+                Some(event) => { 
+                    self.handle_side_button_event(event);
+                    gui_result.released_event = Some(ReleasedEvent::SideButton(event)); 
+                },
+                None => {}
+            }
+            gui_result.consumed = gui_result.consumed || res.consumed;
+        }
+
+        // movement buttons
+        if self.show_movement_buttons {
+            let res = self.gui_movement_buttons.mouse_event(mouse_event);
+            match res.released_event {
+                Some(event) => { gui_result.released_event = Some(ReleasedEvent::MovementButton(event)); },
+                None => {}
+            }
+            match res.pressed_event {
+                Some(event) => { gui_result.pressed_event = Some(PressedEvent::MovementButton(event)); },
+                None => {}
+            }
+            gui_result.consumed = gui_result.consumed || res.consumed;
+        }
+
+        // adjust_spin
+        if self.show_adjust_spin {
+            let res = self.gui_adjust_spin.mouse_event(mouse_event);
+            match res.released_event {
+                Some(event) => { 
+                    self.handle_adjust_spin_event(event);
+                    gui_result.released_event = Some(ReleasedEvent::AdjustSpin(event)); 
+                },
+                None => {}
+            }
+            gui_result.consumed = gui_result.consumed || res.consumed;
+        }
+
+        gui_result
+    }
+
+    pub fn mouse_moved(&mut self, x: u32, y: u32) -> GuiResult
     {
         // change from mouse coordinate system to the gui coordinate system
         let y = self.height - y.min(self.height);
 
         let mouse_event = gui::MouseEvent::Moved{ x, y };
 
-        // menu
-        let (consumed, _events) = self.gui_menu.mouse_event(mouse_event);
-        if consumed {
-            return true;
-        }
-
-        // side buttons
-        if self.show_side_buttons {
-            let (consumed, _events) = self.gui_side_buttons.mouse_event(mouse_event);
-            if consumed {
-                return true;
-            }
-        }
-
-        // movement buttons
-        if self.show_movement_buttons {
-            let (consumed, _events) = self.gui_movement_buttons.mouse_event(mouse_event);
-            if consumed {
-                return true;
-            }
-        }
-
-        // adjust_spin
-        if self.show_adjust_spin {
-            let (consumed, _events) = self.gui_adjust_spin.mouse_event(mouse_event);
-            if consumed {
-                return true;
-            }
-        }
-
-        false
+        self.mouse_event(mouse_event)
     }
 
     pub fn mouse_pressed(&mut self, pressed: bool) 
-        -> (bool, Option<GuiEvent>)
+        -> GuiResult
     {
         let mouse_event = if pressed {
             gui::MouseEvent::Pressed
@@ -152,68 +202,7 @@ impl Gui {
             gui::MouseEvent::Released
         };
 
-        // menu
-        let (consumed, event) = self.gui_menu.mouse_event(mouse_event);
-        if consumed {
-            match event {
-                Some(event) => { 
-                    self.handle_gui_menu_event(event);
-                },
-                None => {},
-            }
-
-            return (true, None);
-        }
-
-        // side buttons
-        if self.show_side_buttons {
-            let (consumed, event) = self.gui_side_buttons.mouse_event(mouse_event);
-            if consumed {
-                match event {
-                    Some(event) => { 
-                        if event.rectangle_id ==  side_buttons::SideButtonId::Orbit {
-                            self.show_adjust_spin = true;
-                        }
-                        let gui_event = GuiEvent::SideButton(event.rectangle_id);
-                        return (true, Some(gui_event)); 
-                    },
-                    None => { return (true, None) },
-                }
-            }
-        }
-
-        // movement buttons
-        if self.show_movement_buttons {
-            let (consumed, event) = self.gui_movement_buttons.mouse_event(mouse_event);
-            if consumed {
-                match event {
-                    Some(event) => { 
-                        let gui_event = GuiEvent::MovementButton{id: event.rectangle_id, pressed: event.pressed};
-                        return (true, Some(gui_event)); 
-                    },
-                    None => { return (true, None) },
-                }
-            }
-        }
-
-        // adjust_spin
-        if self.show_adjust_spin {
-            let (consumed, event) = self.gui_adjust_spin.mouse_event(mouse_event);
-            if consumed {
-                match event {
-                    Some(event) => { 
-                        if event.rectangle_id ==  adjust_spin::AdjustSpinButtonId::Confirm {
-                            self.show_adjust_spin = false;
-                        }
-                        let gui_event = GuiEvent::AdjustSpin(event.rectangle_id);
-                        return (true, Some(gui_event)); 
-                    },
-                    None => { return (true, None) },
-                }
-            }
-        }
-
-        (false, None)
+        self.mouse_event(mouse_event)
     }
 
     pub fn adjust_spin_set_value<'a>(&mut self, 

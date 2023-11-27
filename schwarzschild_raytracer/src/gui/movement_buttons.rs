@@ -13,7 +13,7 @@ pub enum MovementButtonId
 
 pub struct  MovementButtons
 {
-    placement: gui::Gui<MovementButtonId>,
+    placement: gui::Gui<MovementButtonId, MovementButtonId, MovementButtonId>,
 
     mesh_up: wgpu_renderer::vertex_texture_shader::Mesh,
     mesh_forward: wgpu_renderer::vertex_texture_shader::Mesh,
@@ -37,21 +37,21 @@ impl  MovementButtons {
 
         // placement
         let horizontal_layout1 = gui::HorizontalLayout::new(vec![
-            gui::Rectangle::new(MovementButtonId::Up,
-                btn_width, btn_height, btn_boarder, true, true).into(),
-            gui::Rectangle::new(MovementButtonId::Forward,
-                btn_width, btn_height, btn_boarder, true, true).into(),
-            gui::Rectangle::new(MovementButtonId::Down,
-                btn_width, btn_height, btn_boarder, true, true).into(),
+            gui::Rectangle::new_generic(MovementButtonId::Up, MovementButtonId::Up, MovementButtonId::Up, 
+                btn_width, btn_height, btn_boarder).into(),
+            gui::Rectangle::new_generic(MovementButtonId::Forward, MovementButtonId::Forward, MovementButtonId::Forward,
+                btn_width, btn_height, btn_boarder).into(),
+            gui::Rectangle::new_generic(MovementButtonId::Down, MovementButtonId::Down, MovementButtonId::Down,
+                btn_width, btn_height, btn_boarder).into(),
         ]);
 
         let horizontal_layout2 = gui::HorizontalLayout::new(vec![
-            gui::Rectangle::new(MovementButtonId::Left,
-                btn_width, btn_height, btn_boarder, true, true).into(),
-            gui::Rectangle::new(MovementButtonId::Back,
-                btn_width, btn_height, btn_boarder, true, true).into(),
-            gui::Rectangle::new(MovementButtonId::Right,
-                btn_width, btn_height, btn_boarder, true, true).into(),
+            gui::Rectangle::new_generic(MovementButtonId::Left, MovementButtonId::Left, MovementButtonId::Left,
+                btn_width, btn_height, btn_boarder).into(),
+            gui::Rectangle::new_generic(MovementButtonId::Back, MovementButtonId::Back, MovementButtonId::Back,
+                btn_width, btn_height, btn_boarder).into(),
+            gui::Rectangle::new_generic(MovementButtonId::Right, MovementButtonId::Right, MovementButtonId::Right,
+                btn_width, btn_height, btn_boarder).into(),
         ]);
 
         let vertical_layout =  gui::VerticalLayout::new(vec![
@@ -149,7 +149,7 @@ impl  MovementButtons {
         let events = self.placement.resize(width, height);
     
         for event in events {
-            match event.rectangle_id
+            match event.element_id
             {
                 MovementButtonId::Up => update_instance(queue, &mut self.mesh_up, event.x, event.y),
                 MovementButtonId::Forward => update_instance(queue, &mut self.mesh_forward, event.x, event.y),
@@ -162,7 +162,7 @@ impl  MovementButtons {
     }
 
     pub fn mouse_event(&mut self,  mouse_event: gui::MouseEvent) 
-        -> (bool, Option<gui::RectanglePressedEvent<MovementButtonId>>)
+        -> gui::MouseEventResult<MovementButtonId, MovementButtonId>
     {
         self.placement.mouse_event(mouse_event)
     }
