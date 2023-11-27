@@ -9,14 +9,12 @@ use super::sphere_observer_bind_group_layout::SphereObserverBindGroupLayout;
 use super::ray_fan_bind_group_layout::RayFanBindGroupLayout;
 
 
-/// 
-#[allow(dead_code)]
+
 pub struct Pipeline
 {
     render_pipeline: wgpu::RenderPipeline,
 }
 
-#[allow(dead_code)]
 impl Pipeline
 {
     pub fn new(

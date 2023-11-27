@@ -18,7 +18,6 @@ impl RayFanTexture {
     pub fn new(
         wgpu_renderer: &mut impl renderer::WgpuRendererInterface,
         ray_fan_bind_group_layout: &RayFanBindGroupLayout,
-        //_heightmap: &[Heightmap], 
         length: u32,
         label: Option<&str>
     ) -> Self {
@@ -43,30 +42,14 @@ impl RayFanTexture {
 
         let view = texture.create_view(&wgpu::TextureViewDescriptor::default());
 
-        // let sampler = wgpu_renderer.device().create_sampler(
-        //     &wgpu::SamplerDescriptor {
-        //         address_mode_u: wgpu::AddressMode::ClampToEdge,
-        //         address_mode_v: wgpu::AddressMode::ClampToEdge,
-        //         address_mode_w: wgpu::AddressMode::ClampToEdge,
-        //         mag_filter: wgpu::FilterMode::Linear,
-        //         min_filter: wgpu::FilterMode::Nearest,
-        //         mipmap_filter: wgpu::FilterMode::Nearest,
-        //         ..Default::default()
-        //     }
-        // );
-
         let bind_group = wgpu_renderer.device().create_bind_group(
             &wgpu::BindGroupDescriptor {
                 layout: ray_fan_bind_group_layout.get(),
                 entries: &[
                     wgpu::BindGroupEntry {
                         binding: 0,
-                        resource: wgpu::BindingResource::TextureView(&view), // CHANGED!
+                        resource: wgpu::BindingResource::TextureView(&view),
                     },
-                    // wgpu::BindGroupEntry {
-                    //     binding: 1,
-                    //     resource: wgpu::BindingResource::Sampler(&sampler), // CHANGED!
-                    // },
                 ],
                 label: Some("ray_fan_bind_group"),
             }

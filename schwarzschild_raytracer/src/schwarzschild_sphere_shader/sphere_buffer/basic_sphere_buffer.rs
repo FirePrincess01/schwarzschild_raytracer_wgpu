@@ -26,8 +26,6 @@ impl BasicSphereBuffer {
         texture_image: &DynamicImage,
     ) -> Self{
 
-
-        //let texture_image = image::load_from_memory(include_bytes!(image_name)).unwrap();
         let texture_rgba = texture_image.to_rgba8();
 
         let texture = Texture::new(
@@ -94,7 +92,6 @@ impl SchwarzschildSphereShaderDraw for BasicSphereBuffer {
     fn draw<'a>(&'a self, render_pass: &mut wgpu::RenderPass<'a>) {
         self.vertex_buffer.bind(render_pass);
         self.index_buffer.bind(render_pass);
-        //self.texture.bind(render_pass);
         render_pass.set_bind_group(2, &self.texture.bind_group, &[]);
         self.ray_fan.bind(render_pass);
 

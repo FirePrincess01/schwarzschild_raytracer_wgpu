@@ -173,7 +173,6 @@ impl Observer {
         self.state = ObserverState::Unmoving;
     }
 
-    //TODO
     pub fn is_singular(&self) -> bool {
         // We are close to the event horizon
         if (self.position.length() - self.schwarz_r).abs() < 1e-10 as f64 {

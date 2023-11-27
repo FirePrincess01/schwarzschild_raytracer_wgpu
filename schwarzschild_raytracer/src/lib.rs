@@ -148,8 +148,6 @@ impl SchwarzschildRaytracer {
                             },  
                             gui::MovementButtonId::Left => {
                                 self.renderer.process_keyboard(VirtualKeyCode::A, pressed_released);
-                                //let value = if pressed { 10 } else { 11 };
-                                //self.gui.adjust_spin_set_value(&mut self.renderer.wgpu_renderer, &self.font, value);
                             },
                             gui::MovementButtonId::Back => {
                                 if self.rotation_selection_mode {
@@ -158,13 +156,9 @@ impl SchwarzschildRaytracer {
                                 else {
                                     self.renderer.process_keyboard(VirtualKeyCode::S, pressed_released);
                                 }
-                                //let value = if pressed { 20 } else { 21 };
-                                //self.gui.adjust_spin_set_value(&mut self.renderer.wgpu_renderer, &self.font, value);
                             },
                             gui::MovementButtonId::Right => {
                                 self.renderer.process_keyboard(VirtualKeyCode::D, pressed_released);
-                                //let value = if pressed { 30 } else { 31 };
-                                //self.gui.adjust_spin_set_value(&mut self.renderer.wgpu_renderer, &self.font, value);
                             },
                         }
                     },
@@ -173,7 +167,6 @@ impl SchwarzschildRaytracer {
                             gui::AdjustSpinButtonId::Confirm => {
                                 self.rotation_selection_mode = false;
                                 self.renderer.observer.start_orbit(self.selected_rotation);
-                                //self.gui.adjust_spin_set_colors(true, true, true);
                             },
                         }
                     },

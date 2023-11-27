@@ -95,11 +95,6 @@ impl Renderer {
         let sensitivity_scroll = 1.0;
         let camera_controller = super::observer_controller::ObserverController::new(speed, sensitivity, sensitivity_scroll);
 
-        // let camera_uniform = vertex_color_shader::CameraUniform::new();
-
-        // let camera_uniform_buffer = vertex_color_shader::CameraUniformBuffer::new(
-        //     wgpu_renderer.device(), 
-        //     &camera_bind_group_layout);
 
         let width = wgpu_renderer.config().width;
         let height = wgpu_renderer.config().height;
