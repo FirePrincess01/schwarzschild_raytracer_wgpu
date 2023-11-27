@@ -12,7 +12,7 @@ pub enum MenuId
 
 pub struct Menu
 {
-    placement: gui::Gui<MenuId>,
+    placement: gui::Gui<MenuId, gui::NoId, MenuId>,
 
     mesh_menu: wgpu_renderer::vertex_texture_shader::Mesh,
 
@@ -31,7 +31,7 @@ impl Menu {
 
         // placement
         let vertical_layout =  gui::VerticalLayout::new(vec![
-            gui::GuiElement::Rectangle(gui::Rectangle::new_btn(MenuId::Menu,
+            gui::GuiElement::Rectangle(gui::Rectangle::new_btn(MenuId::Menu, MenuId::Menu,
                 btn_width, btn_height, btn_boarder)),
         ]);
 
@@ -80,7 +80,7 @@ impl Menu {
         let events = self.placement.resize(width, height);
     
         for event in events {
-            match event.rectangle_id
+            match event.element_id
             {
                 MenuId::Menu => update_instance(queue, &mut self.mesh_menu, event.x, event.y),
             }
@@ -88,7 +88,7 @@ impl Menu {
     }
 
     pub fn mouse_event(&mut self,  mouse_event: gui::MouseEvent) 
-        -> (bool, Option<gui::RectanglePressedEvent<MenuId>>)
+        -> gui::MouseEventResult<gui::NoId, MenuId>
     {
         self.placement.mouse_event(mouse_event)
     }

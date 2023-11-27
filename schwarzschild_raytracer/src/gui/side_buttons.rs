@@ -1,6 +1,6 @@
 //! the buttons on the right bottom side (excluding the menu button)
 
-use wgpu_renderer::{gui, vertex_texture_shader::VertexTextureShaderDraw};
+use wgpu_renderer::{gui::{self, NoId}, vertex_texture_shader::VertexTextureShaderDraw};
 
 use super::utils::{create_rectangle_vertices, create_rectangle_indices, update_instance, create_texture};
 
@@ -16,7 +16,7 @@ pub enum SideButtonId
 
 pub struct SideButtons
 {
-    placement: gui::Gui<SideButtonId>,
+    placement: gui::Gui<SideButtonId, gui::NoId, SideButtonId>,
 
     mesh_reset: wgpu_renderer::vertex_texture_shader::Mesh,
     mesh_still: wgpu_renderer::vertex_texture_shader::Mesh,
@@ -39,15 +39,15 @@ impl SideButtons {
 
         // placement
         let vertical_layout =  gui::VerticalLayout::new(vec![
-            gui::GuiElement::Rectangle(gui::Rectangle::new_btn(SideButtonId::Reset,
+            gui::GuiElement::Rectangle(gui::Rectangle::new_btn(SideButtonId::Reset, SideButtonId::Reset,
                 btn_width, btn_height, btn_boarder)),
-            gui::GuiElement::Rectangle(gui::Rectangle::new_btn(SideButtonId::Still,
+            gui::GuiElement::Rectangle(gui::Rectangle::new_btn(SideButtonId::Still, SideButtonId::Still,
                 btn_width, btn_height, btn_boarder)),
-            gui::GuiElement::Rectangle(gui::Rectangle::new_btn(SideButtonId::FrozenFall,
+            gui::GuiElement::Rectangle(gui::Rectangle::new_btn(SideButtonId::FrozenFall, SideButtonId::FrozenFall,
                 btn_width, btn_height, btn_boarder)),
-            gui::GuiElement::Rectangle(gui::Rectangle::new_btn(SideButtonId::Fall,
+            gui::GuiElement::Rectangle(gui::Rectangle::new_btn(SideButtonId::Fall, SideButtonId::Fall,
                 btn_width, btn_height, btn_boarder)),
-            gui::GuiElement::Rectangle(gui::Rectangle::new_btn(SideButtonId::Orbit,
+            gui::GuiElement::Rectangle(gui::Rectangle::new_btn(SideButtonId::Orbit, SideButtonId::Orbit,
                 btn_width, btn_height, btn_boarder)),
 
         ]);
@@ -133,7 +133,7 @@ impl SideButtons {
         let events = self.placement.resize(width, height);
     
         for event in events {
-            match event.rectangle_id
+            match event.element_id
             {
                 SideButtonId::Reset => update_instance(queue, &mut self.mesh_reset, event.x, event.y),
                 SideButtonId::Still => update_instance(queue, &mut self.mesh_still, event.x, event.y),
@@ -145,7 +145,7 @@ impl SideButtons {
     }
 
     pub fn mouse_event(&mut self,  mouse_event: gui::MouseEvent) 
-        -> (bool, Option<gui::RectanglePressedEvent<SideButtonId>>)
+        -> gui::MouseEventResult<NoId, SideButtonId>
     {
         self.placement.mouse_event(mouse_event)
     }

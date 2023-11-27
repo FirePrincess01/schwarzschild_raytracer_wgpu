@@ -1,6 +1,6 @@
 //! The adjust spin submenu
 
-use wgpu_renderer::{gui::{self, RectanglePressedEvent}, vertex_texture_shader::VertexTextureShaderDraw};
+use wgpu_renderer::{gui::{self, NoId}, vertex_texture_shader::VertexTextureShaderDraw};
 
 use super::utils::{create_rectangle_vertices, create_rectangle_indices, update_instance, create_texture, create_texture_rgba};
 
@@ -15,6 +15,7 @@ pub enum AdjustSpinId
     Confirm,
 }
 
+#[derive(Copy, Clone)]
 pub enum AdjustSpinButtonId
 {
     Confirm,
@@ -24,7 +25,7 @@ pub struct  AdjustSpin
 {
     label_value: wgpu_renderer::label::Label,
 
-    placement: gui::Gui<AdjustSpinId>,
+    placement: gui::Gui<AdjustSpinId, gui::NoId, AdjustSpinButtonId>,
 
     mesh_title: wgpu_renderer::vertex_texture_shader::Mesh,
     mesh_value: wgpu_renderer::vertex_texture_shader::Mesh,
@@ -62,24 +63,24 @@ impl AdjustSpin {
         // placement
         let vertical_layout1 = gui::VerticalLayout::new(vec![
             gui::Rectangle::new(AdjustSpinId::Red,
-                btn_width, btn_height, btn_boarder, false, false).into(),
-            gui::Rectangle::new(AdjustSpinId::Orange,
-                btn_width, btn_height, btn_boarder, false, false).into(),
-            gui::Rectangle::new(AdjustSpinId::Green,
-                btn_width, btn_height, btn_boarder, false, false).into(),
+                btn_width, btn_height, btn_boarder).into(),
+            gui::Rectangle::new(AdjustSpinId::Orange, 
+                btn_width, btn_height, btn_boarder).into(),
+            gui::Rectangle::new(AdjustSpinId::Green, 
+                btn_width, btn_height, btn_boarder).into(),
         ]);
 
         let horizontal_layout1 = gui::HorizontalLayout::new(vec![
-            gui::Rectangle::new(AdjustSpinId::Title,
-                label_title.width(), label_title.height(), btn_boarder, false, false).into(),
-            gui::Rectangle::new(AdjustSpinId::Value,
-                label_value.width(), label_value.height(), btn_boarder, false, false).into(),
+            gui::Rectangle::new(AdjustSpinId::Title, 
+                label_title.width(), label_title.height(), btn_boarder).into(),
+            gui::Rectangle::new(AdjustSpinId::Value, 
+                label_value.width(), label_value.height(), btn_boarder).into(),
             vertical_layout1.into(),
         ]);
 
         let vertical_layout2 =  gui::VerticalLayout::new(vec![
             horizontal_layout1.into(),
-            gui::Rectangle::new_btn(AdjustSpinId::Confirm,
+            gui::Rectangle::new_btn(AdjustSpinId::Confirm, AdjustSpinButtonId::Confirm,
                 label_confirm.width(), label_confirm.height(), btn_boarder).into(),
         ]);
 
@@ -180,7 +181,7 @@ impl AdjustSpin {
         let events = self.placement.resize(width, height);
     
         for event in events {
-            match event.rectangle_id
+            match event.element_id
             {
                 AdjustSpinId::Title => update_instance(queue, &mut self.mesh_title, event.x, event.y),
                 AdjustSpinId::Value => update_instance(queue, &mut self.mesh_value, event.x, event.y),
@@ -193,20 +194,10 @@ impl AdjustSpin {
     }
 
     pub fn mouse_event(&mut self,  mouse_event: gui::MouseEvent) 
-        -> (bool, Option<gui::RectanglePressedEvent<AdjustSpinButtonId>>)
+        -> gui::MouseEventResult<NoId, AdjustSpinButtonId>
     {
-        let (consumed, event) = self.placement.mouse_event(mouse_event);
-        let gui_event = match event {
-            Some(event) => {
-                match event.rectangle_id {
-                    AdjustSpinId::Confirm => Some(RectanglePressedEvent { rectangle_id: AdjustSpinButtonId::Confirm, pressed: event.pressed }),
-                    _ => None,
-                }
-            },
-            None => None,
-        };
-
-        (consumed, gui_event)
+        let mouse_res = self.placement.mouse_event(mouse_event);
+        mouse_res
     }
 
     pub fn set_value<'a>(&mut self, 

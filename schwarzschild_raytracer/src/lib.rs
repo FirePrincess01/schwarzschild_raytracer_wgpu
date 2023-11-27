@@ -69,12 +69,42 @@ impl SchwarzschildRaytracer {
     }
 
     fn handle_gui_event(&mut self, 
-        gui_event: Option<gui::GuiEvent>)
+        gui_result: &gui::GuiResult)
     {
-        match gui_event {
-            Some(gui_event) => {
-                match gui_event {
-                    gui::GuiEvent::SideButton( id ) => {
+        match &gui_result.pressed_event {
+            Some(event) => {
+                match event {
+                    gui::PressedEvent::MovementButton(id) => {
+                        match id {
+                            gui::MovementButtonId::Up => {
+                                
+                            },
+                            gui::MovementButtonId::Forward => {
+                                
+                            },
+                            gui::MovementButtonId::Down => {
+
+                            },  
+                            gui::MovementButtonId::Left => {
+                                self.gui.adjust_spin_set_value(&mut self.renderer.wgpu_renderer, &self.font, 11);
+                            },
+                            gui::MovementButtonId::Back => {
+                                self.gui.adjust_spin_set_value(&mut self.renderer.wgpu_renderer, &self.font, 21);
+                            },
+                            gui::MovementButtonId::Right => {
+                                self.gui.adjust_spin_set_value(&mut self.renderer.wgpu_renderer, &self.font, 31);
+                            },
+                        }
+                    },
+                }
+            },
+            None => {},
+        }
+
+        match &gui_result.released_event {
+            Some(event) => {
+                match event {
+                    gui::ReleasedEvent::SideButton(id) => {
                         match id {
                             gui::SideButtonId::Reset => {},
                             gui::SideButtonId::Still => {},
@@ -83,7 +113,7 @@ impl SchwarzschildRaytracer {
                             gui::SideButtonId::Orbit => {},
                         }
                     },
-                    gui::GuiEvent::MovementButton { id, pressed } => {
+                    gui::ReleasedEvent::MovementButton(id) => {
                         match id {
                             gui::MovementButtonId::Up => {
                                 self.gui.adjust_spin_set_colors(true, false, false);
@@ -95,20 +125,17 @@ impl SchwarzschildRaytracer {
                                 self.gui.adjust_spin_set_colors(false, false, true);
                             },  
                             gui::MovementButtonId::Left => {
-                                let value = if pressed { 10 } else { 11 };
-                                self.gui.adjust_spin_set_value(&mut self.renderer.wgpu_renderer, &self.font, value);
+                                self.gui.adjust_spin_set_value(&mut self.renderer.wgpu_renderer, &self.font, 10);
                             },
                             gui::MovementButtonId::Back => {
-                                let value = if pressed { 20 } else { 21 };
-                                self.gui.adjust_spin_set_value(&mut self.renderer.wgpu_renderer, &self.font, value);
+                                self.gui.adjust_spin_set_value(&mut self.renderer.wgpu_renderer, &self.font, 20);
                             },
                             gui::MovementButtonId::Right => {
-                                let value = if pressed { 30 } else { 31 };
-                                self.gui.adjust_spin_set_value(&mut self.renderer.wgpu_renderer, &self.font, value);
+                                self.gui.adjust_spin_set_value(&mut self.renderer.wgpu_renderer, &self.font, 30);
                             },
                         }
                     },
-                    gui::GuiEvent::AdjustSpin(id) => {
+                    gui::ReleasedEvent::AdjustSpin(id) => {
                         match id {
                             gui::AdjustSpinButtonId::Confirm => {
                                 self.gui.adjust_spin_set_colors(true, true, true);
@@ -208,35 +235,38 @@ impl default_window::DefaultWindowApp for SchwarzschildRaytracer
                 } => {
                     let is_pressed = *state == ElementState::Pressed;
                     
-                    let (consumed, gui_event) = self.gui.mouse_pressed(is_pressed);
-                    self.handle_gui_event(gui_event);
-                    consumed
-                } 
+                    let res = self.gui.mouse_pressed(is_pressed);
+                    self.handle_gui_event(&res);
+                    res.consumed
+                }
                 WindowEvent::CursorMoved { position, .. } => {
                     let pos = apply_scale_factor(*position, self.scale_factor);
     
-                    let consumed = self.gui.mouse_moved(pos.x as u32, pos.y as u32);
-                    consumed
+                    let res = self.gui.mouse_moved(pos.x as u32, pos.y as u32);
+                    self.handle_gui_event(&res);
+                    res.consumed
                 },
                 WindowEvent::Touch(touch) => {
                     let pos = apply_scale_factor(touch.location, self.scale_factor);
     
                     match touch.phase {
                         TouchPhase::Started => {
-                            let _consumed = self.gui.mouse_moved(pos.x as u32, pos.y as u32);
-                            let (_consumed, gui_event) = self.gui.mouse_pressed(true);
-                            self.handle_gui_event(gui_event);
+                            let res = self.gui.mouse_moved(pos.x as u32, pos.y as u32);
+                            self.handle_gui_event(&res);
+                            let res = self.gui.mouse_pressed(true);
+                            self.handle_gui_event(&res);
                         }
                         TouchPhase::Ended => {
-                            let (_consumed, gui_event) = self.gui.mouse_pressed(false);
-                            self.handle_gui_event(gui_event);
+                            let res = self.gui.mouse_pressed(false);
+                            self.handle_gui_event(&res);
                         }
                         TouchPhase::Cancelled => {
-                            let (_consumed, gui_event) = self.gui.mouse_pressed(false);
-                            self.handle_gui_event(gui_event);
+                            let res = self.gui.mouse_pressed(false);
+                            self.handle_gui_event(&res);
                         }
                         TouchPhase::Moved => {
-                            let _consumed = self.gui.mouse_moved(pos.x as u32, pos.y as u32);
+                            let res = self.gui.mouse_moved(pos.x as u32, pos.y as u32);
+                            self.handle_gui_event(&res);
                         }
                     }
                     true
