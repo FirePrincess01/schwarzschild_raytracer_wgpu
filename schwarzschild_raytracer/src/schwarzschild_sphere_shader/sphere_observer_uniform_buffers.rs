@@ -1,6 +1,7 @@
 //! Contains a buffer for the CameraUniform struct
-//!
-#[allow(dead_code)]
+//! The whole thing contains three 4x4 matrices (they are 3x3, but are inflated for byte alignment),
+//! a scalar velocity factor and the 3D position packed into a 4D vector
+
 use super::super::simulation::observer::TransformationPipeline;
 use super::sphere_observer_bind_group_layout;
 use wgpu::util::DeviceExt;

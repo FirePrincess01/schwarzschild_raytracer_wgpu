@@ -1,5 +1,7 @@
-//! The HeightmapTexture used in the shader
-//!
+//! The 1D texture storing the ray fan for the shader
+//! The ray fan is a interpolated function: [-pi/2, pi/2]-> (-infty, pi/2],NaN
+//! representing the arc traveled by a ray shot at an input angle until it hits the surface, if it doesnt the result is NaN
+//! In practice we treat any result below -10 as not hitting the sphere.
 
 
 use wgpu_renderer::renderer;

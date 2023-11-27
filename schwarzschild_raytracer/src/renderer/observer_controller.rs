@@ -1,19 +1,11 @@
-//! Tracks key and mouse inputs to move the camera
-//!
+//! Tracks key and mouse inputs to move the camera and position of the observer
 
 use glam::DVec3;
 use winit::event::*;
 use winit::dpi::PhysicalPosition;
-use cgmath::*;
 use instant::Duration;
-use wgpu_renderer::renderer::camera::Camera;
-
-
-use std::f32::consts::FRAC_PI_2;
 
 use crate::simulation::observer::Observer;
-
-const SAFE_FRAC_PI_2: f32 = FRAC_PI_2 - 0.0001;
 
 #[derive(Debug)]
 pub struct ObserverController {
@@ -28,11 +20,11 @@ pub struct ObserverController {
     scroll: f64,
     speed: f64,
     sensitivity: f64,
-    sensitivity_scroll: f64,
+    _sensitivity_scroll: f64,
 }
 
 impl ObserverController {
-    pub fn new(speed: f64, sensitivity: f64, sensitivity_scroll: f64) -> Self {
+    pub fn new(speed: f64, sensitivity: f64, _sensitivity_scroll: f64) -> Self {
         Self {
             amount_left: 0.0,
             amount_right: 0.0,
@@ -45,7 +37,7 @@ impl ObserverController {
             scroll: 0.0,
             speed,
             sensitivity,
-            sensitivity_scroll,
+            _sensitivity_scroll,
 
         }
     }
@@ -110,10 +102,23 @@ impl ObserverController {
         self.scroll = 0.0; //not used right now
 
         // Rotate and reset rotation input
-        observer.move_camera(self.rotate_horizontal, self.rotate_vertical);
+        observer.move_camera(self.rotate_horizontal * self.sensitivity, self.rotate_vertical * self.sensitivity);
         self.rotate_horizontal = 0.0;
         self.rotate_vertical = 0.0;
     }
+
+    // pub fn compute_rotation_delta(&mut self, dt: Duration) -> f64 {
+    //     let dt = dt.as_secs_f64();
+    //     let mut delta = 0.;
+
+    //     delta += (self.amount_forward - self.amount_backward) * dt;
+    //     delta += self.scroll;
+    //     self.scroll = 0.0;
+    //     delta += self.rotate_vertical;
+    //     self.rotate_horizontal = 0.0;
+    //     self.rotate_vertical = 0.0;
+    //     return delta;
+    // }
 }
 
  

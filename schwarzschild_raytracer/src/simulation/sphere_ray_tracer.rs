@@ -1,3 +1,10 @@
+//! Calculates a ray fan between an unmoving observer and a sphere
+//! The ray fan is an interpolation function. For evenly spaced angles in [-pi/2, pi/2],
+//! where pi/2 is looking at the black hole and -pi/2 is looking away, 
+//! we calculate the past trajectory of a light ray incoming from that angle.
+//! The final result is PI/2 minus the angle traveled around the black hole until we hit the sphere
+//! When the ray doesnt connect with the sphere, we assign a "large" negative value
+
 use std::f64::consts::{PI, FRAC_PI_2};
 
 
@@ -12,7 +19,7 @@ pub struct SphereRayTracer {
 }
 
 impl SphereRayTracer {
-    const NO_VALUE: f64 = 10.;    //roughly five rotations
+    const NO_VALUE: f64 = 15.;    //roughly five rotations
 
     pub fn new(sphere_r: f64, schwarz_r: f64, max_iter: u32, default_step: f64, nr_nodes_half: usize) -> Self { 
         Self { 
@@ -48,6 +55,8 @@ impl SphereRayTracer {
         return &self.interpolation_grid;
     }
 
+    // Runge Kutta 4 scheme to solve a light ray, find the intersection with sphere with Newtons method
+    // Also applies filtering checks to determine if hitting the sphere is possible
     fn solve_geodesic(&mut self, r: f64, energy: f64, rotation: f64, r_falling: bool) -> f64 {
         let b = rotation / energy;
         let outside = r > self.schwarz_r;
@@ -122,8 +131,8 @@ impl SphereRayTracer {
         let sphere_u = 1. / self.sphere_r;
         let schwarz_u = 1. / self.schwarz_r;
 
-        while (!(self.schwarz_r != 0. && u_k > schwarz_u && u_bar_k > 0.) // not inside BH and falling
-            && iteration < self.max_iter && u_k > 0. ) {
+        while !(self.schwarz_r != 0. && u_k > schwarz_u && u_bar_k > 0.) // not inside BH and falling
+            && iteration < self.max_iter && u_k > 0. {
 
             let mut a_u = u_k + step_half * u_bar_k;
             let mut a_u_bar = u_bar_k + step_half * (-u_k + r3_2 * u_k*u_k);

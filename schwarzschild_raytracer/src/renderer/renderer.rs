@@ -1,17 +1,17 @@
-
+//! Contains the render pipelines needed to render the frames
+//! Controls the render process and simulation on a top level
 
 use std::f64::consts::FRAC_PI_2;
 
 use crate::performance_monitor::PerformanceMonitor;
-use crate::schwarzschild_sphere_shader::ray_fan_texture::RayFanTexture;
 use crate::schwarzschild_sphere_shader::schwarzschild_sphere_shader_draw::SchwarzschildSphereShaderDraw;
 use crate::schwarzschild_sphere_shader::sphere_observer_bind_group_layout::SphereObserverBindGroupLayout;
 use crate::schwarzschild_sphere_shader::sphere_observer_uniform_buffers::SphereObserverUniformBuffer;
-use crate::schwarzschild_sphere_shader::{ray_fan_texture, ray_fan_bind_group_layout};
+use crate::schwarzschild_sphere_shader::ray_fan_bind_group_layout;
 use crate::simulation::observer::Observer;
 use crate::{schwarzschild_sphere_shader, simulation};
-use glam::{DVec3, DVec2};
-use wgpu_renderer::renderer::{WgpuRenderer, self};
+use glam::DVec2;
+use wgpu_renderer::renderer::WgpuRenderer;
 use wgpu_renderer::vertex_color_shader::{self, VertexColorShaderDraw};
 use wgpu_renderer::vertex_texture_shader::{self, VertexTextureShaderDraw};
 use winit::event::{VirtualKeyCode, ElementState, MouseScrollDelta};
@@ -62,6 +62,7 @@ impl Renderer {
             &ray_fan_bind_group_layout,
             &texture_bind_group_layout,
             surface_format,
+            true,
         );
 
         let sphere_observer_uniform_buffer = SphereObserverUniformBuffer::new(wgpu_renderer.device(), &sphere_observer_bind_group_layout);
@@ -89,7 +90,7 @@ impl Renderer {
 
 
         // processes user inputs regarding movement and camera
-        let speed = 4.0;
+        let speed = 8.0;
         let sensitivity = 1.0;
         let sensitivity_scroll = 1.0;
         let camera_controller = super::observer_controller::ObserverController::new(speed, sensitivity, sensitivity_scroll);
@@ -182,7 +183,7 @@ impl Renderer {
     pub fn process_scroll(&mut self, delta: &MouseScrollDelta) 
     {
         // wont be using that now
-        //self.camera_controller.process_scroll(delta);
+        self.camera_controller.process_scroll(delta);
     }
 
     pub fn process_mouse_position(&mut self, x: f64, y: f64) {

@@ -1,3 +1,5 @@
+//! This module contains the all the tools to create a working sphere shader around a black hole, which uses simulation data as input
+//! Including shader, bindings, layouts, textures, the pipeline etc.
 
 pub mod ray_fan_bind_group_layout;
 pub mod ray_fan_texture;

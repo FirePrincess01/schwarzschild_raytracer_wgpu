@@ -1,9 +1,13 @@
+//! The observer is a more complex version of a camera, it handles
+//! - position: either through physical simulation, or user movement, depending on the mode
+//! - direction to look at, (controlled by mouse/touch in this app)
+//! - Three rotations and special relativistic aberration provided to the shader
+
 use glam::*;
 use super::{orbit::Orbit, polar_transformations::{look_to_vec_mat, polar2_to_carthesic}};
 
 const SAFE_FRAC_PI_2: f64 = std::f64::consts::FRAC_PI_2 - 0.0001;
 
-#[allow(dead_code)]
 #[derive(PartialEq)]
 enum ObserverState {
     Unmoving,   // No movement relative to the black hole
@@ -20,7 +24,6 @@ pub struct TransformationPipeline{
     pub psi_factor_and_position: [f32; 4],
 }
 
-#[allow(dead_code)]
 impl TransformationPipeline {
     pub fn new() -> Self {
         Self {
@@ -58,7 +61,6 @@ pub struct Observer{
     psi: f64,
 }
 
-#[allow(dead_code)]
 impl Observer {
     pub fn new(schwarz_r: f64, fov: f64, width: f64, height: f64) -> Self {
         let screen_ratio = width / height;
@@ -97,7 +99,7 @@ impl Observer {
         match self.state {
             ObserverState::Unmoving | ObserverState::FrozenFall => {
                 let movement_step = 0.051;
-                desired_direction = movement_step * DMat3::from_rotation_z(-self.camera.x) * desired_direction;
+                desired_direction = movement_step * DMat3::from_rotation_z(self.camera.x) * desired_direction;
                 self.position += desired_direction;
             },
             ObserverState::Orbiting => {

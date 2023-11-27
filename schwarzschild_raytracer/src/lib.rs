@@ -1,3 +1,5 @@
+//! The main class of this programm, dealing with all the interactions with webgpu
+//! Basically the main file of this program
 
 mod renderer;
 mod geometry;
@@ -22,13 +24,17 @@ struct SchwarzschildRaytracer {
     performance_monitor: performance_monitor::PerformanceMonitor,
 
     // data
-    //textured_quad: textured_quad::TexturedQuad,
     first_sphere: BasicSphereBuffer,
     second_sphere: BasicSphereBuffer,
+    third_sphere: BasicSphereBuffer,
 
     // gui
     font: rusttype::Font<'static>,
     gui: gui::Gui,
+
+    rotation_selection_mode: bool,
+    selected_rotation: f64,
+    rotation_delta: f64,
 }
 
 impl SchwarzschildRaytracer {
@@ -40,11 +46,13 @@ impl SchwarzschildRaytracer {
         let height = size.height;
 
         let mut renderer = renderer::Renderer::new(window).await;
-        let performance_monitor = performance_monitor::PerformanceMonitor::new(
+        let mut performance_monitor = performance_monitor::PerformanceMonitor::new(
             &mut renderer.wgpu_renderer);
+        performance_monitor.show = false;
 
         let texture_image = image::load_from_memory(include_bytes!("eso0932a.jpg")).unwrap();
         let texture_image2 = image::load_from_memory(include_bytes!("world_8k.png")).unwrap();
+        let texture_image3 = image::load_from_memory(include_bytes!("transparent_clouds.png")).unwrap();
 
         let schwarz_r = renderer.get_schwarz_r();
         let first_sphere = BasicSphereBuffer::new(
@@ -62,6 +70,14 @@ impl SchwarzschildRaytracer {
             11., 
             schwarz_r, 
             &texture_image2);
+
+        let third_sphere = BasicSphereBuffer::new(
+            &mut renderer.wgpu_renderer, 
+            &renderer.texture_bind_group_layout, 
+            &renderer.ray_fan_bind_group_layout, 
+            12., 
+            schwarz_r, 
+            &texture_image3);
 
         //Gui
         let font_data = include_bytes!("../../wgpu_renderer/src/freefont/FreeMono.ttf");
@@ -81,9 +97,14 @@ impl SchwarzschildRaytracer {
 
             first_sphere,
             second_sphere,
+            third_sphere,
 
             font,
             gui,
+
+            rotation_selection_mode: false,
+            selected_rotation: 18.,
+            rotation_delta: 0.,
         }
     }
 
@@ -99,44 +120,80 @@ impl SchwarzschildRaytracer {
                             gui::SideButtonId::Still => { self.renderer.observer.start_unmoving(); },
                             gui::SideButtonId::FrozenFall => { self.renderer.observer.start_frozen_fall(); },
                             gui::SideButtonId::Fall => { self.renderer.observer.start_orbit(0.); },
-                            gui::SideButtonId::Orbit => { self.renderer.observer.start_orbit(18.); },
+                            gui::SideButtonId::Orbit => { 
+                                self.selected_rotation = 18.;
+                                self.rotation_delta = 0.;
+                                self.rotation_selection_mode = true
+                            },
+                            gui::SideButtonId::PerformanceMonitor => { self.performance_monitor.show = !self.performance_monitor.show; },
+                            
                         }
                     },
                     gui::GuiEvent::MovementButton { id, pressed } => {
+                        let pressed_released = if pressed {ElementState::Pressed} else {ElementState::Released};
                         match id {
                             gui::MovementButtonId::Up => {
-                                self.gui.adjust_spin_set_colors(true, false, false);
+                                self.renderer.process_keyboard(VirtualKeyCode::Space, pressed_released);
                             },
                             gui::MovementButtonId::Forward => {
-                                self.gui.adjust_spin_set_colors(false, true, false);
+                                if self.rotation_selection_mode {
+                                    self.rotation_delta += if pressed { 1. } else { -1. };
+                                }
+                                else {
+                                    self.renderer.process_keyboard(VirtualKeyCode::W, pressed_released);
+                                }
                             },
                             gui::MovementButtonId::Down => {
-                                self.gui.adjust_spin_set_colors(false, false, true);
+                                self.renderer.process_keyboard(VirtualKeyCode::LShift, pressed_released);
                             },  
                             gui::MovementButtonId::Left => {
-                                let value = if pressed { 10 } else { 11 };
-                                self.gui.adjust_spin_set_value(&mut self.renderer.wgpu_renderer, &self.font, value);
+                                self.renderer.process_keyboard(VirtualKeyCode::A, pressed_released);
+                                //let value = if pressed { 10 } else { 11 };
+                                //self.gui.adjust_spin_set_value(&mut self.renderer.wgpu_renderer, &self.font, value);
                             },
                             gui::MovementButtonId::Back => {
-                                let value = if pressed { 20 } else { 21 };
-                                self.gui.adjust_spin_set_value(&mut self.renderer.wgpu_renderer, &self.font, value);
+                                if self.rotation_selection_mode {
+                                    self.rotation_delta -= if pressed { 1. } else { -1. };
+                                }
+                                else {
+                                    self.renderer.process_keyboard(VirtualKeyCode::S, pressed_released);
+                                }
+                                //let value = if pressed { 20 } else { 21 };
+                                //self.gui.adjust_spin_set_value(&mut self.renderer.wgpu_renderer, &self.font, value);
                             },
                             gui::MovementButtonId::Right => {
-                                let value = if pressed { 30 } else { 31 };
-                                self.gui.adjust_spin_set_value(&mut self.renderer.wgpu_renderer, &self.font, value);
+                                self.renderer.process_keyboard(VirtualKeyCode::D, pressed_released);
+                                //let value = if pressed { 30 } else { 31 };
+                                //self.gui.adjust_spin_set_value(&mut self.renderer.wgpu_renderer, &self.font, value);
                             },
                         }
                     },
                     gui::GuiEvent::AdjustSpin(id) => {
                         match id {
                             gui::AdjustSpinButtonId::Confirm => {
-                                self.gui.adjust_spin_set_colors(true, true, true);
+                                self.rotation_selection_mode = false;
+                                self.renderer.observer.start_orbit(self.selected_rotation);
+                                //self.gui.adjust_spin_set_colors(true, true, true);
                             },
                         }
                     },
                 }
             },
             None => {},
+        }
+    }
+
+    fn update_rotation_gui(&mut self, dt: instant::Duration) {
+        //if self.rotation_delta.abs() < 0.00001 {
+        //    return;
+        //}
+        self.selected_rotation += self.rotation_delta * dt.as_secs_f64();
+        self.gui.adjust_spin_set_value(&mut self.renderer.wgpu_renderer, &self.font, self.selected_rotation as u32);
+        let stability = simulation::orbit::Orbit::is_stable(self.selected_rotation, self.renderer.get_schwarz_r(), self.renderer.get_radial_position());
+        match stability {
+            simulation::orbit::OrbitStability::HittingSingularity => {self.gui.adjust_spin_set_colors(true, false, false);},
+            simulation::orbit::OrbitStability::StableOrbit => {self.gui.adjust_spin_set_colors(false, true, false);},
+            simulation::orbit::OrbitStability::EscapeTrajectory => {self.gui.adjust_spin_set_colors(false, false, true);},
         }
     }
 }
@@ -179,12 +236,14 @@ impl default_window::DefaultWindowApp for SchwarzschildRaytracer
     }
 
     fn update(&mut self, dt: instant::Duration) {
+        self.update_rotation_gui(dt);
         self.renderer.update(dt);
 
         self.performance_monitor.watch.start(3);
             let r = self.renderer.get_radial_position();
             self.first_sphere.update_ray_fan(self.renderer.wgpu_renderer.queue(), r);
             self.second_sphere.update_ray_fan(self.renderer.wgpu_renderer.queue(), r);
+            self.third_sphere.update_ray_fan(self.renderer.wgpu_renderer.queue(), r);
         self.performance_monitor.watch.stop(3);
         
         // self.performance_monitor.watch.start(4);
@@ -252,7 +311,7 @@ impl default_window::DefaultWindowApp for SchwarzschildRaytracer
                     match touch.phase {
                         TouchPhase::Started => {
                             let _consumed = self.gui.mouse_moved(pos.x as u32, pos.y as u32);
-                            let (_consumed, gui_event) = self.gui.mouse_pressed(true);
+                            let (consumed, gui_event) = self.gui.mouse_pressed(true);
                             self.handle_gui_event(gui_event);
     
                             if !consumed {
@@ -291,11 +350,10 @@ impl default_window::DefaultWindowApp for SchwarzschildRaytracer
 
     fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
         self.renderer.render(
-            &[&self.first_sphere, &self.second_sphere],
+            &[&self.first_sphere, &self.second_sphere, &self.third_sphere],
             &self.gui,
             &mut self.performance_monitor)
     }
-
 
 }
 

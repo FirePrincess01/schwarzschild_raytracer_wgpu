@@ -15,6 +15,7 @@ pub enum AdjustSpinId
     Confirm,
 }
 
+#[derive(PartialEq)]
 pub enum AdjustSpinButtonId
 {
     Confirm,

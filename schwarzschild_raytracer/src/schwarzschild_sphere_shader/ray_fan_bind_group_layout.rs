@@ -1,4 +1,5 @@
 //! A bind group to contain the ray fan in the shader
+//! It is a 1D Float storage array without sampling
 pub struct RayFanBindGroupLayout {
     ray_fan_bind_group_layout: wgpu::BindGroupLayout,
 }

@@ -1,3 +1,4 @@
+//! A basic test to compare the ray fan with a verified version
 use std::f64::consts::PI;
 
 use super::sphere_ray_tracer::SphereRayTracer;

@@ -1,3 +1,5 @@
+//! A shader for rendering spheres around a black hole
+
 // Vertex shader
 struct VertexInput {
     @location(0) position: vec3<f32>,
@@ -5,9 +7,10 @@ struct VertexInput {
 
 struct VertexOutput {
     @builtin(position) clip_position: vec4<f32>,
-    @location(0) pos: vec3<f32>,
+    @location(0) pos: vec3<f32>,    //needed because clip_position is in pixels in the fs
 }
 
+//This shader just covers the screen or whatever the vertices define
 @vertex 
 fn vs_main(vertex: VertexInput) -> VertexOutput {
     var out: VertexOutput;
@@ -29,24 +32,23 @@ struct ObserverTransformations {
 @group(0) @binding(0)
 var<uniform> observer: ObserverTransformations;
 
-// The ray interpolation for the sphere
+// The ray fan interpolation for the sphere
 @group(1) @binding(0)
 var ray_fan: texture_1d<f32>;
-//@group(1) @binding(1)
-//var ray_sampler: sampler;
 
-// The texture of the sphere
+// The graphical texture of the sphere
 @group(2) @binding(0)
 var t_diffuse: texture_2d<f32>;
 @group(2) @binding(1)
 var s_diffuse: sampler;
 
-// Transforms to carthesic coordinates
+// Transforms polar to carthesic coordinates
+// Polar coordinates are [0, 2pi]x[-pi/2, pi/2]
 fn to_cart(pVec: vec2<f32>) -> vec4<f32> {
     return vec4<f32>(cos(pVec.x)*cos(pVec.y), sin(pVec.x)*cos(pVec.y), sin(pVec.y), 0.);
 }
 
-// Transforms to polar coordinates
+// Transforms carthesic to polar coordinates
 // input needs to be normalized
 fn to_polar(cartVec: vec4<f32>) -> vec2<f32> {
     return vec2<f32>(atan2(cartVec.y, cartVec.x), asin(cartVec.z));
@@ -54,34 +56,38 @@ fn to_polar(cartVec: vec4<f32>) -> vec2<f32> {
 
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
+    //Swap to coordinate system with z facing forward, x down and y left
     var carthesic = vec4<f32>(-in.pos.y, -in.pos.x, 1., 0.);
+
+    //Performs FOV scaling and rotates into the direction of movement
     carthesic = normalize(observer.screen_to_movement * carthesic);
     var polar = to_polar(carthesic);
 
     //Special relativistic velocity abberation
+    //This makes the things we move towards appear further away
     let sin_result: f32 = sin(polar.y);
     polar.y = asin((sin_result - observer.psi_factor.x) / (1. - sin_result * observer.psi_factor.x));
 
     carthesic = to_cart(polar);
+    //Rotate to look (z) directly at the black hole
     carthesic = observer.movement_to_central * carthesic; 
     polar = to_polar(carthesic);
 
-    //Normalizing theta to [0,1] and casting the ray onto the sphere
+    //Normalizing theta to [0,1] and casting the rays onto the sphere
     polar.y = clamp((M_PI_2 - polar.y) / (M_PI_2 * 2.), 0., 1.);
     let size = u32(textureDimensions(ray_fan));
     polar.y = polar.y * f32(size - 1u);
     let index = u32(floor(polar.y));
     let weight = fract(polar.y);
-    // The higher one might be invalid, but in that case weight is 0
+    // The higher index might be invalid, but in that case weight is 0
     polar.y = textureLoad(ray_fan, index, 0).x * (1. - weight) + textureLoad(ray_fan, index + 1u, 0).x * weight;
-    
-    // Replacement for rayfan until it works
-    //polar.y = - polar.y;
 
-    // // Hit the black hole
+    // Hit the black hole (or too many rotations)
+    // This helps us keep the edge of the black hole more steady
     let hit_black_hole = polar.y < -7.;
 
     carthesic = to_cart(polar);
+    // rotate to align with the texture coordinates
     carthesic = observer.central_to_uv * carthesic;
     polar = to_polar(carthesic);
 

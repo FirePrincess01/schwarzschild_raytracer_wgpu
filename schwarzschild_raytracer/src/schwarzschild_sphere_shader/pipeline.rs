@@ -1,4 +1,4 @@
-//! A specialized shader to render spheres centered on a black hole
+//! A specialized shader pipeline to render spheres centered on a black hole
 //!
 
 use wgpu::BlendState;
@@ -25,6 +25,7 @@ impl Pipeline
         ray_fan_bind_group_layout: &RayFanBindGroupLayout,
         texture_bind_group_layout: &TextureBindGroupLayout, 
         surface_format: wgpu::TextureFormat,
+        transparent: bool,
     ) -> Self
     {
         // Shader
@@ -47,6 +48,7 @@ impl Pipeline
                 push_constant_ranges: &[],
             });
 
+        let blendstate = if transparent {BlendState::ALPHA_BLENDING} else {BlendState::REPLACE};
 
         let render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
             label: Some("Schwarzschild Sphere Render Pipeline"),
@@ -63,7 +65,7 @@ impl Pipeline
                 entry_point: "fs_main",
                 targets: &[Some(wgpu::ColorTargetState { 
                     format: surface_format,
-                    blend: Some(BlendState::REPLACE),
+                    blend: Some(blendstate),
                     write_mask: wgpu::ColorWrites::ALL,
                 })],
             }),
@@ -82,7 +84,7 @@ impl Pipeline
             depth_stencil: Some(wgpu::DepthStencilState {
                 format: DepthTexture::DEPTH_FORMAT,
                 depth_write_enabled: true,
-                depth_compare: wgpu::CompareFunction::Less,
+                depth_compare: wgpu::CompareFunction::Always,
                 stencil: wgpu::StencilState::default(),
                 bias: wgpu::DepthBiasState::default(),
             }),

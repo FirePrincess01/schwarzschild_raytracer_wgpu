@@ -1,14 +1,15 @@
+//! Represents a intransparent basic sphere
+//! Contains the graphical surface texture and the storage texture for the corresponding ray fan.
+//! Further contains the simulation tool to calculate said ray fan.
+
 use std::f64::consts::PI;
 
-use glam::DVec3;
 use image::DynamicImage;
 use wgpu_renderer::{vertex_texture_shader::{Texture, IndexBuffer, TextureBindGroupLayout}, vertex_color_shader::{Vertex, VertexBuffer}, renderer::WgpuRendererInterface};
 
 use crate::{schwarzschild_sphere_shader::{ray_fan_texture::RayFanTexture, ray_fan_bind_group_layout::RayFanBindGroupLayout, schwarzschild_sphere_shader_draw::SchwarzschildSphereShaderDraw}, simulation::sphere_ray_tracer::SphereRayTracer};
 
 pub struct BasicSphereBuffer{
-    texture_rgba: image::ImageBuffer<image::Rgba<u8>, Vec<u8>>,
-
     vertex_buffer: VertexBuffer,
     index_buffer: IndexBuffer,
     texture: Texture,
@@ -28,9 +29,6 @@ impl BasicSphereBuffer {
 
         //let texture_image = image::load_from_memory(include_bytes!(image_name)).unwrap();
         let texture_rgba = texture_image.to_rgba8();
-
-        let width = texture_rgba.width();
-        let height = texture_rgba.height();
 
         let texture = Texture::new(
             wgpu_renderer, 
@@ -54,7 +52,6 @@ impl BasicSphereBuffer {
             nr_nodes_half);
         
         Self {
-            texture_rgba,
             vertex_buffer,
             index_buffer,
             texture,

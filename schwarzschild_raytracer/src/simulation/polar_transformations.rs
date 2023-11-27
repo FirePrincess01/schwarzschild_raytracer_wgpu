@@ -1,3 +1,7 @@
+//! Some utility functions to help with polar coordinates and 
+//! construct matrices suitable for the coordinate conventions in this framework
+//! I mean, what lunatic seriously thinks y is up?
+
 use glam::*;
 
 pub fn carthesic_to_polar(vec: DVec3) -> DVec3 {

@@ -1,5 +1,13 @@
+//! Simulates the orbit of a mass like particle around a black hole
+
 use glam::*;
-    use super::polar_transformations::*;
+use super::polar_transformations::*;
+
+pub enum OrbitStability{
+    HittingSingularity,
+    StableOrbit,
+    EscapeTrajectory,
+}
 
 pub struct Orbit{
     schwarz_r: f64,
@@ -35,9 +43,9 @@ impl Orbit {
         let plane_normal = position.cross(desired_direction);
         let mut tilt_angle = plane_normal.angle_between(DVec3::Z);
 
-        let mut start_phi;
+        let start_phi;
         let mut orbit_angle;
-        let mut plane_tilt_mat;
+        let plane_tilt_mat;
         let pos_phi = f64::atan2(position.y, position.x);
 
         if tilt_angle < 1e-10 as f64 || std::f64::consts::PI - tilt_angle < 1e-10 as f64 {
@@ -112,9 +120,9 @@ impl Orbit {
 		delta_phi = time_step * l / 4. * (u * u + next_u * next_u);
 
         //Break down into smaller steps if the step size is too large
-		let mut step_fragments:u32 = (1 + ((delta_phi * 100.).floor() as u32)).min(1000);
+		let step_fragments:u32 = (1 + ((delta_phi * 100.).floor() as u32)).min(1000);
 
-        for i in 0..step_fragments {
+        for _ in 0..step_fragments {
             self.do_angle_step(delta_phi / step_fragments as f64);
             if self.has_hit_singularity {
                 return;
@@ -143,6 +151,7 @@ impl Orbit {
         
         self.u = next_u;
         self.u_bar = next_u_bar;
+        // TODO: handle u < 0 ?
         if self.u.is_infinite() || self.u > 1e5{
             self.has_hit_singularity = true;
         }
@@ -184,27 +193,29 @@ impl Orbit {
         return spectator;
     }
 
+    // Calculates the angle between the orbit plane and span(position, position x Z)
     pub fn current_tilt_angle(&self) -> f64 {
         return self.tilt_angle * (self.get_position().y - self.start_phi).cos();
     }
 
     /// Calculates wether the Orbit is stable, instable (falls into Black hole), or on an escape trajectory.
-    /// Todo: use enum as return value
-    pub fn is_stable(&mut self) -> bool {
-        if self.rotation.powi(2) < 3. * self.schwarz_r.powi(2) {
-            return false; //instable
+    /// Input parameters are rotational momentum, schwarzschild radius and distance of the starting position.
+    pub fn is_stable(rotation: f64, schwarz_r: f64, r: f64) -> OrbitStability {
+        if rotation.powi(2) < 3. * schwarz_r.powi(2) {
+            return OrbitStability::HittingSingularity;
         }
-        let r1 = self.rotation.powi(2) / self.schwarz_r * (1. - f64::sqrt(1. - 3. * self.schwarz_r.powi(2) / self.rotation.powi(2)));
-        if self.r < r1 {
-            return false; //"instable";
+        let r1 = rotation.powi(2) / schwarz_r * (1. - f64::sqrt(1. - 3. * schwarz_r.powi(2) / rotation.powi(2)));
+        if r < r1 {
+            return OrbitStability::HittingSingularity;
         }
-        if self.energy > 1. {
-            return false;//"escaping";
+        let energy = ((1. - schwarz_r / r) * (1. + rotation * rotation / (r * r))).sqrt();
+        if energy > 1. {
+            return OrbitStability::EscapeTrajectory;
         }
-        if self.energy.powi(2) - (1. - self.schwarz_r / r1) * (self.rotation.powi(2) / r1.powi(2) + 1.) < 0. {
-            return true; //"stable";
+        if energy.powi(2) - (1. - schwarz_r / r1) * (rotation.powi(2) / r1.powi(2) + 1.) < 0. {
+            return OrbitStability::StableOrbit;
         }
-        return false; //"instable";
+        return OrbitStability::HittingSingularity;
     }
 
     pub fn is_singular(&self) -> bool {
