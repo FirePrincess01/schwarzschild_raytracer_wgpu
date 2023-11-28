@@ -7,6 +7,7 @@ mod movement_buttons;
 mod side_buttons;
 mod menu;
 mod fps_counter;
+mod debug_values;
 mod utils;
 
 pub use side_buttons::SideButtonId;
@@ -39,10 +40,12 @@ pub struct Gui
     gui_movement_buttons: movement_buttons::MovementButtons,
     gui_adjust_spin: adjust_spin::AdjustSpin,
     gui_fps_counter: fps_counter::FpsCounter,
+    gui_debug_values: debug_values::DebugValues,
 
     show_side_buttons: bool,
     show_movement_buttons: bool,
     show_adjust_spin: bool,
+    show_debug_values: bool,
 }
 
 impl Gui {
@@ -84,6 +87,13 @@ impl Gui {
             height,
             font);
 
+        let gui_debug_values = debug_values::DebugValues::new(
+            wgpu_renderer, 
+            texture_bind_group_layout, 
+            width, 
+            height,
+            font);
+
         Self {
             width,
             height,
@@ -93,10 +103,12 @@ impl Gui {
             gui_movement_buttons,
             gui_adjust_spin,
             gui_fps_counter,
+            gui_debug_values,
 
             show_side_buttons: false,
             show_movement_buttons: true,
             show_adjust_spin: false,
+            show_debug_values: false,
         }
     }
 
@@ -113,6 +125,9 @@ impl Gui {
             SideButtonId::Orbit => {
                 self.show_adjust_spin = true;
             },
+            SideButtonId::PerformanceMonitor => {
+                self.show_debug_values = !self.show_debug_values;
+            }
             _ => {}
         }
     }
@@ -136,6 +151,7 @@ impl Gui {
         self.gui_movement_buttons.resize(wgpu_renderer.queue(), width, height);
         self.gui_adjust_spin.resize(wgpu_renderer.queue(), width, height);
         self.gui_fps_counter.resize(wgpu_renderer.queue(), width, height);
+        self.gui_debug_values.resize(wgpu_renderer.queue(), width, height);
     }
 
     fn mouse_event(&mut self, mouse_event: MouseEvent) -> GuiResult
@@ -236,6 +252,14 @@ impl Gui {
     {
         self.gui_fps_counter.set_value(wgpu_renderer, font, value);
     }
+
+    pub fn debug_values_set_coordinates<'a>(&mut self, 
+        wgpu_renderer: &mut impl wgpu_renderer::renderer::WgpuRendererInterface, 
+        font: &'a rusttype::Font, 
+        x: f32, y: f32, z: f32) 
+    {
+        self.gui_debug_values.set_value(wgpu_renderer, font, x, y, z);
+    }
 }
 
 impl VertexTextureShaderDraw for Gui
@@ -259,6 +283,11 @@ impl VertexTextureShaderDraw for Gui
         // adjust_spin
         if self.show_adjust_spin {
             self.gui_adjust_spin.draw(render_pass);
+        }
+
+        // debug values
+        if self.show_debug_values {
+            self.gui_debug_values.draw(render_pass);
         }
     }
 }
