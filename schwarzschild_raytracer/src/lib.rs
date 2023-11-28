@@ -22,6 +22,7 @@ struct SchwarzschildRaytracer {
 
     renderer: renderer::Renderer,
     performance_monitor: performance_monitor::PerformanceMonitor,
+    fps: wgpu_renderer::performance_monitor::Fps,
 
     // data
     first_sphere: BasicSphereBuffer,
@@ -49,6 +50,8 @@ impl SchwarzschildRaytracer {
         let mut performance_monitor = performance_monitor::PerformanceMonitor::new(
             &mut renderer.wgpu_renderer);
         performance_monitor.show = false;
+
+        let fps = wgpu_renderer::performance_monitor::Fps::new();
 
         let texture_image = image::load_from_memory(include_bytes!("eso0932a.jpg")).unwrap();
         let texture_image2 = image::load_from_memory(include_bytes!("world_8k.png")).unwrap();
@@ -94,6 +97,7 @@ impl SchwarzschildRaytracer {
 
             renderer,
             performance_monitor,
+            fps,
 
             first_sphere,
             second_sphere,
@@ -282,6 +286,10 @@ impl default_window::DefaultWindowApp for SchwarzschildRaytracer
         // self.performance_monitor.watch.stop(4);
 
         self.performance_monitor.update(&mut self.renderer.wgpu_renderer);
+
+        // gui fps
+        self.fps.update(dt);
+        self.gui.fps_counter_set_value(&mut self.renderer.wgpu_renderer, &self.font, self.fps.get());
     }
 
     fn input(&mut self, event: &winit::event::WindowEvent) -> bool {
