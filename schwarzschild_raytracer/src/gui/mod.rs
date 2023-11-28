@@ -6,6 +6,7 @@ mod adjust_spin;
 mod movement_buttons;
 mod side_buttons;
 mod menu;
+mod fps_counter;
 mod utils;
 
 pub use side_buttons::SideButtonId;
@@ -37,6 +38,7 @@ pub struct Gui
     gui_side_buttons: side_buttons::SideButtons,
     gui_movement_buttons: movement_buttons::MovementButtons,
     gui_adjust_spin: adjust_spin::AdjustSpin,
+    gui_fps_counter: fps_counter::FpsCounter,
 
     show_side_buttons: bool,
     show_movement_buttons: bool,
@@ -75,6 +77,13 @@ impl Gui {
             height,
             font);
 
+        let gui_fps_counter = fps_counter::FpsCounter::new(
+            wgpu_renderer, 
+            texture_bind_group_layout, 
+            width, 
+            height,
+            font);
+
         Self {
             width,
             height,
@@ -83,6 +92,7 @@ impl Gui {
             gui_side_buttons,
             gui_movement_buttons,
             gui_adjust_spin,
+            gui_fps_counter,
 
             show_side_buttons: false,
             show_movement_buttons: true,
@@ -125,6 +135,7 @@ impl Gui {
         self.gui_side_buttons.resize(wgpu_renderer.queue(), width, height);
         self.gui_movement_buttons.resize(wgpu_renderer.queue(), width, height);
         self.gui_adjust_spin.resize(wgpu_renderer.queue(), width, height);
+        self.gui_fps_counter.resize(wgpu_renderer.queue(), width, height);
     }
 
     fn mouse_event(&mut self, mouse_event: MouseEvent) -> GuiResult
@@ -217,6 +228,14 @@ impl Gui {
     {
         self.gui_adjust_spin.set_colors(red, orange, green);
     }
+
+    pub fn fps_counter_set_value<'a>(&mut self, 
+        wgpu_renderer: &mut impl wgpu_renderer::renderer::WgpuRendererInterface, 
+        font: &'a rusttype::Font, 
+        value: u32) 
+    {
+        self.gui_fps_counter.set_value(wgpu_renderer, font, value);
+    }
 }
 
 impl VertexTextureShaderDraw for Gui
@@ -229,6 +248,7 @@ impl VertexTextureShaderDraw for Gui
         // side buttons
         if self.show_side_buttons {
             self.gui_side_buttons.draw(render_pass);
+            self.gui_fps_counter.draw(render_pass);
         }
 
         // movement buttons
