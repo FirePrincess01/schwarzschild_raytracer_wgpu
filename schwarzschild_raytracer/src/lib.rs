@@ -281,15 +281,16 @@ impl default_window::DefaultWindowApp for SchwarzschildRaytracer
             self.third_sphere.update_ray_fan(self.renderer.wgpu_renderer.queue(), r);
         self.performance_monitor.watch.stop(3);
         
-        // self.performance_monitor.watch.start(4);
-        //     // update more stuff
-        // self.performance_monitor.watch.stop(4);
+        self.performance_monitor.watch.start(4);
+            // gui debug values
+            self.gui.debug_values_set_coordinates(&mut self.renderer.wgpu_renderer, &self.font, 100.11, 200.22, 300.33);
+
+            // gui fps
+            self.fps.update(dt);
+            self.gui.fps_counter_set_value(&mut self.renderer.wgpu_renderer, &self.font, self.fps.get());
+        self.performance_monitor.watch.stop(4);
 
         self.performance_monitor.update(&mut self.renderer.wgpu_renderer);
-
-        // gui fps
-        self.fps.update(dt);
-        self.gui.fps_counter_set_value(&mut self.renderer.wgpu_renderer, &self.font, self.fps.get());
     }
 
     fn input(&mut self, event: &winit::event::WindowEvent) -> bool {
