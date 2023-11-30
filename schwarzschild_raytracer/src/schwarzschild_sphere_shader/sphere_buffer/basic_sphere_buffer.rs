@@ -28,17 +28,18 @@ impl BasicSphereBuffer {
 
         let texture_rgba = texture_image.to_rgba8();
 
-        let texture = Texture::new(
+        let texture = Texture::new_with_mipmaps(
             wgpu_renderer, 
             &texture_bind_group_layout, 
             &texture_rgba, 
-            Some(&("Sphere r".to_owned() + &sphere_radius.to_string() + " texture"))).unwrap();
+            Some(&("Sphere r".to_owned() + &sphere_radius.to_string() + " texture")),
+            4).unwrap();
 
         let vertex_buffer = VertexBuffer::new(wgpu_renderer.device(), 
             &Self::vertices());
         let index_buffer = IndexBuffer::new(wgpu_renderer.device(), &Self::indices());
 
-        let nr_nodes_half = 100;
+        let nr_nodes_half = 200;
         let ray_fan = RayFanTexture::new(wgpu_renderer, 
             ray_fan_bind_group_layout, 
             2 * nr_nodes_half as u32, 

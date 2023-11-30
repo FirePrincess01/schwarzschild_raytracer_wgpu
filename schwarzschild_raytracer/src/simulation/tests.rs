@@ -6,6 +6,6 @@ use super::sphere_ray_tracer::SphereRayTracer;
 #[test]
 fn sphere_geodesics_test() {
     let mut sphere = SphereRayTracer::new(100., 10., 100, PI/100., 10);
-    let result = sphere.solve_ray_fan(25.);
-    let stall = true;
+    let _result = sphere.solve_ray_fan(25.);
+    let _stall = true;
 }
