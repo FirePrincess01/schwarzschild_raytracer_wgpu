@@ -6,6 +6,7 @@ pub mod observer;
 pub mod orbit;
 mod polar_transformations;
 pub mod sphere_ray_tracer;
+pub mod ray_connector;
 
 #[cfg(test)]
 mod tests;

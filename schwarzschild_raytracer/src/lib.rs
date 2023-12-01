@@ -7,6 +7,7 @@ mod performance_monitor;
 mod simulation;
 mod schwarzschild_sphere_shader;
 mod gui;
+mod schwarzschild_point_shader;
 
 use schwarzschild_sphere_shader::sphere_buffer::basic_sphere_buffer::BasicSphereBuffer;
 use wgpu_renderer::default_window;
