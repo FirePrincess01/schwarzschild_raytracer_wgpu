@@ -119,6 +119,10 @@ impl Orbit {
 		next_u = u + delta_phi * u_bar;
 		delta_phi = time_step * l / 4. * (u * u + next_u * next_u);
 
+        if next_u > 50. {
+            self.has_hit_singularity = true;
+            return;
+        }
         //Break down into smaller steps if the step size is too large
 		let step_fragments:u32 = (1 + ((delta_phi * 100.).floor() as u32)).min(1000);
 
@@ -152,7 +156,7 @@ impl Orbit {
         self.u = next_u;
         self.u_bar = next_u_bar;
         // TODO: handle u < 0 ?
-        if self.u.is_infinite() || self.u > 1e5{
+        if self.u.is_infinite() || self.u > 100.{
             self.has_hit_singularity = true;
         }
         else {
@@ -195,7 +199,12 @@ impl Orbit {
 
     // Calculates the angle between the orbit plane and span(position, position x Z)
     pub fn current_tilt_angle(&self) -> f64 {
-        return self.tilt_angle * (self.get_position().y - self.start_phi).cos();
+        let mut polar_pos = DVec3::ZERO;
+        polar_pos.x = self.r;
+        polar_pos.y = self.orbit_angle;
+        polar_pos.z = 0.;
+        polar_pos = trans_polar_vec(polar_pos, self.plane_tilt_mat);
+        return self.tilt_angle * (polar_pos.y).cos();
     }
 
     /// Calculates wether the Orbit is stable, instable (falls into Black hole), or on an escape trajectory.

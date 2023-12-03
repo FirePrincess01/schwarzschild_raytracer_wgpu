@@ -97,7 +97,7 @@ impl ObserverController {
         direction.x += self.amount_forward - self.amount_backward;
         direction.y += self.amount_left - self.amount_right;
         direction.z += self.amount_up - self.amount_down;
-        observer.update_position(direction * self.speed * dt);
+        observer.update_position(direction * self.speed * dt, dt);
 
         self.scroll = 0.0; //not used right now
 

@@ -15,6 +15,9 @@ enum ObserverState {
     Orbiting,      // Simulated movement on an orbit
 }
 
+// Contains all the transformations
+// Those are 3 3x3 rotations matrices, blown up to 4x4 for byte alignment
+// Furthermore display to movement has display scaling included in the w colomn
 #[repr(C)]
 #[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct TransformationPipeline{
@@ -44,14 +47,14 @@ pub struct Observer{
     orbit: Option<Orbit>,
     state: ObserverState,
 
-    time_step: f64,
+    time_speedup: f64,
     energy: f64,
 
     mouse_sensitivity: f64,
 
     // sub-matrices needed to assemble the first transformation
     // the camera transformation is left out, so looking around is possible even when singular
-    fov_scaling: DMat3,     //constant
+    fov_scaling: DVec4,     //constant
     standard_to_movement: DMat3,    
 
     //Further rotates towards the center of the black holes
@@ -64,7 +67,7 @@ pub struct Observer{
 impl Observer {
     pub fn new(schwarz_r: f64, fov: f64, width: f64, height: f64) -> Self {
         let screen_ratio = width / height;
-        let position = dvec3(25., 0., 0.);
+        let position = dvec3(25., 0., 1.);
         let camera = dvec2(std::f64::consts::PI, 0.);
         Self {
             schwarz_r,
@@ -72,10 +75,10 @@ impl Observer {
             camera,
             orbit: None,
             state: ObserverState::FrozenFall,
-            time_step: 1./60.,
+            time_speedup: 1.,
             energy: 1.,
             mouse_sensitivity: fov / height,
-            fov_scaling: DMat3::from_diagonal(DVec3::new((fov/2.).tan(), (fov/2.).tan() * screen_ratio, 1.)),
+            fov_scaling: DVec4::new((fov/2.).tan(), (fov/2.).tan() * screen_ratio, 1., 1.),
             standard_to_movement: DMat3::IDENTITY,
             movement_to_central: DMat3::IDENTITY,
             central_to_uv: DMat3::IDENTITY,
@@ -91,11 +94,15 @@ impl Observer {
         return self.position.length();
     }
 
+    pub fn get_position(&self) -> DVec3 {
+        return self.position;
+    }
+
     // Maybe add advance_some_steps
 
     // Updates the position with either user commands or simulated trajectory
     // desired_direction is in terms of (forward, left, up)
-    pub fn update_position(&mut self, mut desired_direction: DVec3) {
+    pub fn update_position(&mut self, mut desired_direction: DVec3, dt: f64) {
         match self.state {
             ObserverState::Unmoving | ObserverState::FrozenFall => {
                 let movement_step = 0.051;
@@ -103,7 +110,7 @@ impl Observer {
                 self.position += desired_direction;
             },
             ObserverState::Orbiting => {
-                self.orbit.as_mut().unwrap().do_step(self.time_step);
+                self.orbit.as_mut().unwrap().do_step(self.time_speedup * dt);
                 self.position = self.orbit.as_mut().unwrap().get_position();
                 // match mutable is not available
                 //match &self.orbit {
@@ -243,9 +250,11 @@ impl Observer {
         }
         //Allows the camera to update even if singular
         let camera_to_standard = look_to_vec_mat(polar2_to_carthesic(self.camera));
+        let mut camera_to_movement = DMat4::from_mat3(self.standard_to_movement * camera_to_standard);
+        camera_to_movement.w_axis = self.fov_scaling;
 
         return TransformationPipeline{
-            display_to_movement: Mat4::from_mat3((self.standard_to_movement * camera_to_standard * self.fov_scaling).as_mat3()).to_cols_array(),
+            display_to_movement: camera_to_movement.as_mat4().to_cols_array(),
             movement_to_central: Mat4::from_mat3(self.movement_to_central.as_mat3()).to_cols_array(),
             central_to_uv: Mat4::from_mat3(self.central_to_uv.as_mat3()).to_cols_array(),
             psi_factor_and_position: [((self.psi - 1.) / self.psi).sqrt() as f32, self.position.x as f32, self.position.y as f32, self.position.z as f32],
@@ -255,8 +264,8 @@ impl Observer {
     pub fn update_screen_format(&mut self, width: f64, height: f64) {
         // Update screen scaling matrix
         let screen_ratio = width / height;
-        let fov_half_tan = self.fov_scaling.x_axis.x;
-        self.fov_scaling = DMat3::from_diagonal(DVec3::new(fov_half_tan, fov_half_tan * screen_ratio, 1.));
+        let fov_half_tan = self.fov_scaling.x;
+        self.fov_scaling = DVec4::new(fov_half_tan, fov_half_tan * screen_ratio, 1., 1.);
 
         // Update mouse sensitivity
 
