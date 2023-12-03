@@ -60,6 +60,7 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
     var carthesic = vec4<f32>(-in.pos.y, -in.pos.x, 1., 0.);
 
     //Performs FOV scaling and rotates into the direction of movement
+    carthesic = carthesic * observer.screen_to_movement.w;
     carthesic = normalize(observer.screen_to_movement * carthesic);
     var polar = to_polar(carthesic);
 

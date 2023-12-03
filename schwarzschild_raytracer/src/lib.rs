@@ -9,6 +9,7 @@ mod schwarzschild_sphere_shader;
 mod gui;
 mod schwarzschild_point_shader;
 
+use schwarzschild_point_shader::point_cloud::PointCloud;
 use schwarzschild_sphere_shader::sphere_buffer::basic_sphere_buffer::BasicSphereBuffer;
 use wgpu_renderer::default_window;
 use winit::event::{WindowEvent, KeyboardInput, VirtualKeyCode, ElementState, TouchPhase, MouseButton};
@@ -29,6 +30,9 @@ struct SchwarzschildRaytracer {
     first_sphere: BasicSphereBuffer,
     second_sphere: BasicSphereBuffer,
     third_sphere: BasicSphereBuffer,
+    first_point_cloud: PointCloud,
+    first_point_mesh: schwarzschild_point_shader::mesh::Mesh,
+    first_point_mesh_farside: schwarzschild_point_shader::mesh::Mesh,
 
     // gui
     font: rusttype::Font<'static>,
@@ -83,6 +87,10 @@ impl SchwarzschildRaytracer {
             schwarz_r, 
             &texture_image3);
 
+        let first_point_cloud = PointCloud::new_accretion_disk(schwarz_r as f32, renderer.get_position(), true);
+        let first_point_mesh = schwarzschild_point_shader::mesh::Mesh::new(renderer.wgpu_renderer.device(), first_point_cloud.get_vertices(), None);
+        let first_point_mesh_farside = schwarzschild_point_shader::mesh::Mesh::new(renderer.wgpu_renderer.device(), first_point_cloud.get_vertices_farside(), None);
+
         //Gui
         let font_data = include_bytes!("../../wgpu_renderer/src/freefont/FreeMono.ttf");
         let font = rusttype::Font::try_from_bytes(font_data as &[u8]).expect("Error constructing Font");
@@ -103,6 +111,9 @@ impl SchwarzschildRaytracer {
             first_sphere,
             second_sphere,
             third_sphere,
+            first_point_cloud,
+            first_point_mesh,
+            first_point_mesh_farside,
 
             font,
             gui,
@@ -280,11 +291,16 @@ impl default_window::DefaultWindowApp for SchwarzschildRaytracer
             self.first_sphere.update_ray_fan(self.renderer.wgpu_renderer.queue(), r);
             self.second_sphere.update_ray_fan(self.renderer.wgpu_renderer.queue(), r);
             self.third_sphere.update_ray_fan(self.renderer.wgpu_renderer.queue(), r);
+
+            self.first_point_cloud.update(self.renderer.get_position(), dt);
+            self.first_point_mesh.update_vertex_buffer(self.renderer.wgpu_renderer.queue(), self.first_point_cloud.get_vertices());
+            self.first_point_mesh_farside.update_vertex_buffer(self.renderer.wgpu_renderer.queue(), self.first_point_cloud.get_vertices_farside());
         self.performance_monitor.watch.stop(3);
         
         self.performance_monitor.watch.start(4);
             // gui debug values
-            self.gui.debug_values_set_coordinates(&mut self.renderer.wgpu_renderer, &self.font, 100.11, 200.22, 300.33);
+            let pos = self.renderer.get_position();
+            self.gui.debug_values_set_coordinates(&mut self.renderer.wgpu_renderer, &self.font, pos.x, pos.y, pos.z);
 
             // gui fps
             self.fps.update(dt);
@@ -394,7 +410,8 @@ impl default_window::DefaultWindowApp for SchwarzschildRaytracer
 
     fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
         self.renderer.render(
-            &[&self.first_sphere, &self.second_sphere, &self.third_sphere],
+            &[&self.first_sphere/*, &self.second_sphere , &self.third_sphere*/],
+            &[&self.first_point_mesh, &self.first_point_mesh_farside],
             &self.gui,
             &mut self.performance_monitor)
     }

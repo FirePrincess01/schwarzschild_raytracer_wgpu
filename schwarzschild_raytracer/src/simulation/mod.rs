@@ -4,7 +4,7 @@
 //! Furthermore it contains the tool to calculate a ray fan between an observer and a given sphere
 pub mod observer;
 pub mod orbit;
-mod polar_transformations;
+pub mod polar_transformations;
 pub mod sphere_ray_tracer;
 pub mod ray_connector;
 

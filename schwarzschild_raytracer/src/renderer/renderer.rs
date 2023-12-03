@@ -9,8 +9,8 @@ use crate::schwarzschild_sphere_shader::sphere_observer_bind_group_layout::Spher
 use crate::schwarzschild_sphere_shader::sphere_observer_uniform_buffers::SphereObserverUniformBuffer;
 use crate::schwarzschild_sphere_shader::ray_fan_bind_group_layout;
 use crate::simulation::observer::Observer;
-use crate::{schwarzschild_sphere_shader, simulation};
-use glam::DVec2;
+use crate::{schwarzschild_sphere_shader, simulation, schwarzschild_point_shader};
+use glam::{DVec2, Vec3};
 use wgpu_renderer::renderer::WgpuRenderer;
 use wgpu_renderer::vertex_color_shader::{self, VertexColorShaderDraw};
 use wgpu_renderer::vertex_texture_shader::{self, VertexTextureShaderDraw};
@@ -30,6 +30,8 @@ pub struct Renderer
     pub sphere_observer_bind_group_layout: SphereObserverBindGroupLayout,
     pub sphere_observer_uniform_buffer: SphereObserverUniformBuffer,
     pub texture_bind_group_layout: vertex_texture_shader::TextureBindGroupLayout,
+
+    pipeline_schwarz_points: schwarzschild_point_shader::pipeline::Pipeline,
 
     pipeline_lines: vertex_color_shader::Pipeline,
     pipeline_texture_gui: vertex_texture_shader::Pipeline,
@@ -105,6 +107,11 @@ impl Renderer {
 
         camera_uniform_orthographic_buffer.update(wgpu_renderer.queue(), camera_uniform_orthographic);   // add uniform identity matrix
 
+        let pipeline_schwarz_points = schwarzschild_point_shader::pipeline::Pipeline::new(
+            wgpu_renderer.device(), 
+            &sphere_observer_bind_group_layout, 
+            surface_format);
+
         Self {
             wgpu_renderer,
             observer,
@@ -115,13 +122,13 @@ impl Renderer {
             texture_bind_group_layout,
             pipeline_lines,
             camera_bind_group_layout,
-
             pipeline_texture_gui,
             camera_uniform_orthographic,
             camera_uniform_orthographic_buffer,
             camera_controller,
             mouse_pressed: false,
             last_mouse_position: DVec2::ZERO,
+            pipeline_schwarz_points,
         } 
     }
 
@@ -197,6 +204,7 @@ impl Renderer {
 
     pub fn render(&mut self, 
         spheres: &[&dyn SchwarzschildSphereShaderDraw],
+        point_meshes: &[& schwarzschild_point_shader::mesh::Mesh],
         mesh_gui: & impl VertexTextureShaderDraw,
         performance_monitor: &mut PerformanceMonitor) -> Result<(), wgpu::SurfaceError>
     {
@@ -244,6 +252,12 @@ impl Renderer {
                 sphere.draw(&mut render_pass);
             }
 
+            self.pipeline_schwarz_points.bind(&mut render_pass);
+            for mesh in point_meshes {
+                mesh.draw(&mut render_pass);
+            }
+
+
             // performance monitor
             self.pipeline_lines.bind(&mut render_pass);
             self.camera_uniform_orthographic_buffer.bind(&mut render_pass);
@@ -269,6 +283,10 @@ impl Renderer {
 
     pub fn get_radial_position(&self) -> f64 {
         return self.observer.get_radial_position();
+    }
+
+    pub fn get_position(&self) -> Vec3 {
+        return self.observer.get_position().as_vec3();
     }
 }
 
