@@ -5,9 +5,7 @@ use std::io::{BufReader, Cursor};
 use cfg_if::cfg_if;
 use glam::Vec3;
 use wgpu::util::DeviceExt;
-
-use wgpu_renderer::vertex_texture_shader::Texture;
-use crate::schwarzschild_object_shader::model::{self, Model};
+use crate::schwarzschild_object_shader::model;
 
 #[cfg(target_arch = "wasm32")]
 fn format_url(file_name: &str) -> reqwest::Url {

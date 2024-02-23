@@ -74,8 +74,8 @@ impl ObserverController {
     }
 
     pub fn process_mouse(&mut self, mouse_dx: f64, mouse_dy: f64) {
-        self.rotate_horizontal = mouse_dx;
-        self.rotate_vertical = mouse_dy;
+        self.rotate_horizontal += mouse_dx;
+        self.rotate_vertical += mouse_dy;
     }
 
     pub fn process_scroll(&mut self, delta: &MouseScrollDelta) {

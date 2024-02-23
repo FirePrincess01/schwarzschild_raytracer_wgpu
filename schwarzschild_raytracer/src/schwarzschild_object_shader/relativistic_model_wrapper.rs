@@ -92,6 +92,7 @@ impl RelativisticModelWrapper {
         }
     }
 
+    #[allow(dead_code)]
     pub fn has_farside(&self) -> bool {
         self.has_farside
     }

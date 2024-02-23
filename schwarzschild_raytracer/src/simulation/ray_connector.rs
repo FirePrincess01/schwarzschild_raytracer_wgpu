@@ -141,6 +141,7 @@ impl RayConnector {
         self.pos = new_pos;
     }
 
+    #[allow(dead_code)]
     pub fn get_position(&self) -> Vec3 {
         return self.pos;
     }

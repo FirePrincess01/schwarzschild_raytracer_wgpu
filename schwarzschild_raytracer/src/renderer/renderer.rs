@@ -18,7 +18,6 @@ use wgpu_renderer::vertex_texture_shader::{self, VertexTextureShaderDraw};
 use winit::event::{ElementState, MouseScrollDelta};
 
 use super::observer_controller::ObserverController;
-use crate::schwarzschild_object_shader::model::{self, Model};
 
 pub struct Renderer<'a>
 {   

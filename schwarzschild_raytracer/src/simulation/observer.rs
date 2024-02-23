@@ -50,11 +50,12 @@ pub struct Observer{
     time_speedup: f64,
     energy: f64,
 
+    fov: f64,
     mouse_sensitivity: f64,
 
     // sub-matrices needed to assemble the first transformation
     // the camera transformation is left out, so looking around is possible even when singular
-    fov_scaling: DVec4,     //constant
+    fov_scaling: DVec4,
     standard_to_movement: DMat3,    
 
     //Further rotates towards the center of the black holes
@@ -77,6 +78,7 @@ impl Observer {
             state: ObserverState::FrozenFall,
             time_speedup: 1.,
             energy: 1.,
+            fov,
             mouse_sensitivity: fov / height,
             fov_scaling: DVec4::new((fov/2.).tan(), (fov/2.).tan() * screen_ratio, 1., 1.),
             standard_to_movement: DMat3::IDENTITY,
@@ -268,7 +270,7 @@ impl Observer {
         self.fov_scaling = DVec4::new(fov_half_tan, fov_half_tan * screen_ratio, 1., 1.);
 
         // Update mouse sensitivity
-
+        self.mouse_sensitivity = self.fov / height;
     }
 
     pub fn move_camera(&mut self, horizontal_pixels: f64, vertical_pixels: f64) {

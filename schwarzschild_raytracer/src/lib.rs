@@ -262,18 +262,18 @@ impl<'a> SchwarzschildRaytracer<'a> {
 fn apply_scale_factor(position: winit::dpi::PhysicalPosition<f64>, scale_factor: f32) 
 -> winit::dpi::PhysicalPosition<f64> 
 {
-    cfg_if::cfg_if! {
-        // apply scale factor for the web
-        if #[cfg(target_arch = "wasm32")] {
-            let mut res = position;
-            res.x = res.x / scale_factor as f64;
-            res.y = res.y / scale_factor as f64;
-            res
-        }
-        else {
+    // cfg_if::cfg_if! {
+    //     // apply scale factor for the web
+    //     if #[cfg(target_arch = "wasm32")] {
+    //         let mut res = position;
+    //         res.x = res.x / scale_factor as f64;
+    //         res.y = res.y / scale_factor as f64;
+    //         res
+    //     }
+    //     else {
             position
-        }
-    }
+    //     }
+    // }
 }
 
 impl<'a> default_window::DefaultWindowApp for SchwarzschildRaytracer<'a> 
