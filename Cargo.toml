@@ -6,3 +6,5 @@ members = [
     "wgpu_renderer",
     "schwarzschild_raytracer",
 ]
+
+resolver = "2"

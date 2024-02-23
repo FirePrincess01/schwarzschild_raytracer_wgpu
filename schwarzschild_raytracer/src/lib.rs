@@ -1,3 +1,5 @@
+// #![deny(unused_crate_dependencies)]
+
 //! The main class of this programm, dealing with all the interactions with webgpu
 //! Basically the main file of this program
 
@@ -16,17 +18,17 @@ use schwarzschild_object_shader::relativistic_model_wrapper::RelativisticModelWr
 use schwarzschild_point_shader::point_cloud::PointCloud;
 use schwarzschild_sphere_shader::sphere_buffer::basic_sphere_buffer::BasicSphereBuffer;
 use wgpu_renderer::default_window;
-use winit::event::{WindowEvent, KeyboardInput, VirtualKeyCode, ElementState, TouchPhase, MouseButton};
+use winit::event::{WindowEvent, ElementState, TouchPhase, MouseButton};
 
 #[cfg(target_arch="wasm32")]
 use wasm_bindgen::prelude::*;
 
 
-struct SchwarzschildRaytracer {
+struct SchwarzschildRaytracer<'a> {
     size: winit::dpi::PhysicalSize<u32>,
     scale_factor: f32,
 
-    renderer: renderer::Renderer,
+    renderer: renderer::Renderer<'a>,
     performance_monitor: performance_monitor::PerformanceMonitor,
     fps: wgpu_renderer::performance_monitor::Fps,
 
@@ -49,8 +51,8 @@ struct SchwarzschildRaytracer {
     rotation_delta: f64,
 }
 
-impl SchwarzschildRaytracer {
-    pub async fn new(window: &winit::window::Window) -> Self 
+impl<'a> SchwarzschildRaytracer<'a> {
+    pub async fn new(window: &'a winit::window::Window) -> Self 
     {
         let size = window.inner_size();
         let scale_factor = window.scale_factor() as f32;
@@ -144,32 +146,32 @@ impl SchwarzschildRaytracer {
                     gui::PressedEvent::MovementButton(id) => {
                         match id {
                             gui::MovementButtonId::Up => {
-                                self.renderer.process_keyboard(VirtualKeyCode::Space, ElementState::Pressed);
+                                self.renderer.process_keyboard(winit::keyboard::KeyCode::Space, ElementState::Pressed);
                             },
                             gui::MovementButtonId::Forward => {
                                 if self.rotation_selection_mode {
                                     self.rotation_delta += 1.;
                                 }
                                 else {
-                                    self.renderer.process_keyboard(VirtualKeyCode::W, ElementState::Pressed);
+                                    self.renderer.process_keyboard(winit::keyboard::KeyCode::KeyW, ElementState::Pressed);
                                 }
                             },
                             gui::MovementButtonId::Down => {
-                                self.renderer.process_keyboard(VirtualKeyCode::LShift, ElementState::Pressed);
+                                self.renderer.process_keyboard(winit::keyboard::KeyCode::ShiftLeft, ElementState::Pressed);
                             },  
                             gui::MovementButtonId::Left => {
-                                self.renderer.process_keyboard(VirtualKeyCode::A, ElementState::Pressed);
+                                self.renderer.process_keyboard(winit::keyboard::KeyCode::KeyA, ElementState::Pressed);
                             },
                             gui::MovementButtonId::Back => {
                                 if self.rotation_selection_mode {
                                     self.rotation_delta -= 1.;
                                 }
                                 else {
-                                    self.renderer.process_keyboard(VirtualKeyCode::S, ElementState::Pressed);
+                                    self.renderer.process_keyboard(winit::keyboard::KeyCode::KeyS, ElementState::Pressed);
                                 }
                             },
                             gui::MovementButtonId::Right => {
-                                self.renderer.process_keyboard(VirtualKeyCode::D, ElementState::Pressed);
+                                self.renderer.process_keyboard(winit::keyboard::KeyCode::KeyD, ElementState::Pressed);
                             },
                         }
                     },
@@ -198,32 +200,32 @@ impl SchwarzschildRaytracer {
                     gui::ReleasedEvent::MovementButton(id) => {
                         match id {
                             gui::MovementButtonId::Up => {
-                                self.renderer.process_keyboard(VirtualKeyCode::Space, ElementState::Released);
+                                self.renderer.process_keyboard(winit::keyboard::KeyCode::Space, ElementState::Released);
                             },
                             gui::MovementButtonId::Forward => {
                                 if self.rotation_selection_mode {
                                     self.rotation_delta += -1.;
                                 }
                                 else {
-                                    self.renderer.process_keyboard(VirtualKeyCode::W, ElementState::Released);
+                                    self.renderer.process_keyboard(winit::keyboard::KeyCode::KeyW, ElementState::Released);
                                 }
                             },
                             gui::MovementButtonId::Down => {
-                                self.renderer.process_keyboard(VirtualKeyCode::LShift, ElementState::Released);
+                                self.renderer.process_keyboard(winit::keyboard::KeyCode::ShiftLeft, ElementState::Released);
                             },  
                             gui::MovementButtonId::Left => {
-                                self.renderer.process_keyboard(VirtualKeyCode::A, ElementState::Released);
+                                self.renderer.process_keyboard(winit::keyboard::KeyCode::KeyA, ElementState::Released);
                             },
                             gui::MovementButtonId::Back => {
                                 if self.rotation_selection_mode {
                                     self.rotation_delta -= -1.;
                                 }
                                 else {
-                                    self.renderer.process_keyboard(VirtualKeyCode::S, ElementState::Released);
+                                    self.renderer.process_keyboard(winit::keyboard::KeyCode::KeyS, ElementState::Released);
                                 }
                             },
                             gui::MovementButtonId::Right => {
-                                self.renderer.process_keyboard(VirtualKeyCode::D, ElementState::Released);
+                                self.renderer.process_keyboard(winit::keyboard::KeyCode::KeyD, ElementState::Released);
                             },
                         }
                     },
@@ -274,7 +276,7 @@ fn apply_scale_factor(position: winit::dpi::PhysicalPosition<f64>, scale_factor:
     }
 }
 
-impl default_window::DefaultWindowApp for SchwarzschildRaytracer 
+impl<'a> default_window::DefaultWindowApp for SchwarzschildRaytracer<'a> 
 {
     fn get_size(&self) -> winit::dpi::PhysicalSize<u32> {
         self.size
@@ -328,9 +330,9 @@ impl default_window::DefaultWindowApp for SchwarzschildRaytracer
         self.performance_monitor.watch.start(2);
             let res = match event {
                 WindowEvent::KeyboardInput {
-                    input:
-                        KeyboardInput {
-                            virtual_keycode: Some(VirtualKeyCode::F2),
+                    event:
+                    winit::event::KeyEvent  {
+                            physical_key: winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::F2),
                             state: ElementState::Pressed,
                             ..
                         },
@@ -340,9 +342,9 @@ impl default_window::DefaultWindowApp for SchwarzschildRaytracer
                     true
                 },
                 WindowEvent::KeyboardInput {
-                    input:
-                        KeyboardInput {
-                            virtual_keycode: Some(key),
+                    event:
+                    winit::event::KeyEvent {
+                            physical_key: winit::keyboard::PhysicalKey::Code(key),
                             state,
                             ..
                         },
@@ -439,7 +441,14 @@ impl default_window::DefaultWindowApp for SchwarzschildRaytracer
 pub async fn run()
 {
     let default_window = default_window::DefaultWindow::new();
-    let app = SchwarzschildRaytracer::new(&default_window.window).await;
+    let event_loop = default_window.event_loop;
+    let window = default_window.window;
 
-    default_window::run(default_window, app);
+    // log::info!("log info");
+    // log::warn!("log warn");
+    // log::error!("log error");
+
+    let app = SchwarzschildRaytracer::new(&window).await;
+    default_window::run(event_loop, &window, app);
+
 }
