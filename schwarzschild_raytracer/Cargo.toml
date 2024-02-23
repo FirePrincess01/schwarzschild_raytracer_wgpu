@@ -24,6 +24,8 @@ glam = "0.25"
 fastrand = "2.0"
 tobj = { version = "4.0.1", default-features = false, features = [ "async" ]}
 rusttype = "0.9"
+log = "0.4"
+anyhow = "1.0"
 
 [build-dependencies]
 anyhow = "1.0"
