@@ -40,8 +40,8 @@ impl Pipeline
                 label: Some("Render Pipeline Layout"),
                 bind_group_layouts: &[
                     &sphere_observer_bind_group_layout.get(),
-                    &ray_fan_bind_group_layout.get(),
                     &texture_bind_group_layout.get(),
+                    &ray_fan_bind_group_layout.get(),
                 ],
                 push_constant_ranges: &[],
             });

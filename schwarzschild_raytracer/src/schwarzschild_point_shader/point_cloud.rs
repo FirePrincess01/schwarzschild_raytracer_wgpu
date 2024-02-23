@@ -40,10 +40,11 @@ impl PointCloud {
 
         for i in 0..size {
             points.push(RayConnector::new(schwarz_r, model_vertices[i], true));
-            vertices.push(Vertex{position: points[i].reset_ray(observer_pos)});
+            vertices.push(Vertex{
+                position: [model_vertices[i].x, model_vertices[i].y, model_vertices[i].z, points[i].reset_ray(observer_pos)]});
             if activate_farside {
                 points_farside.push(RayConnector::new(schwarz_r, model_vertices[i], false));
-                vertices_farside.push(Vertex{position: points_farside[i].reset_ray(observer_pos)});
+                vertices_farside.push(Vertex{position: [model_vertices[i].x, model_vertices[i].y, model_vertices[i].z, points_farside[i].reset_ray(observer_pos)]});
             }
             if activate_orbits {
                 let pos = model_vertices[i].as_dvec3();
@@ -88,7 +89,7 @@ impl PointCloud {
         let mut rng = fastrand::Rng::new();
 
         for _ in 0..NR_POINTS {
-            let r = 16. + 10. * rng.f64();
+            let r = 2. * schwarz_r as f64 + 2. * schwarz_r as f64 * rng.f64();
             let phi = rng.f64() * std::f64::consts::TAU;
             let theta = 0.2 * (rng.f64() - 0.5);
             let pos = crate::simulation::polar_transformations::polar_to_carthesic(DVec3::new(r, phi, theta));
@@ -100,7 +101,7 @@ impl PointCloud {
 
     #[allow(dead_code)]
     pub fn new_heart(schwarz_r: f32, observer_pos: Vec3, activate_farside: bool) -> Self {
-        const NR_POINTS: usize = 4000;
+        const NR_POINTS: usize = 400;
         let mut points: Vec<Vec3> = Vec::new();
         points.reserve(NR_POINTS);
 
@@ -135,14 +136,16 @@ impl PointCloud {
                 }
 
                 self.points[i].set_position(orbit_pos);
+                self.vertices[i].position[0..3].copy_from_slice(& [orbit_pos.x, orbit_pos.y, orbit_pos.z]);
                 if self.has_farside {
                     self.points_farside[i].set_position(orbit_pos);
+                    self.vertices_farside[i].position[0..3].copy_from_slice(& [orbit_pos.x, orbit_pos.y, orbit_pos.z]);
                 }
             }
 
-            self.vertices[i].position = self.points[i].update_ray(observer_pos, 1);
+            self.vertices[i].position[3] = self.points[i].update_ray(observer_pos, 1);
             if self.has_farside {
-                self.vertices_farside[i].position = self.points_farside[i].update_ray(observer_pos, 1);
+                self.vertices_farside[i].position[3] = self.points_farside[i].update_ray(observer_pos, 1);
             }
         }
     }
@@ -153,5 +156,9 @@ impl PointCloud {
 
     pub fn get_vertices_farside(&self) -> &[Vertex] {
         return &self.vertices_farside;
+    }
+
+    pub fn has_farside(&self) -> bool {
+        self.has_farside
     }
 }

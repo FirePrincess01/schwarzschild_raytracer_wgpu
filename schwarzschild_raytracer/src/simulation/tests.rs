@@ -23,7 +23,7 @@ fn ray_connector_euclidian_test() -> Result<(), String> {
         let mut ray_connector = RayConnector::new(0., pos, true);
         let euclidian_angle = (pos - observer_pos).angle_between(-observer_pos);
         let output = ray_connector.reset_ray(observer_pos);
-        let error = (euclidian_angle - output[3]).abs();
+        let error = (euclidian_angle - output).abs();
         let angles_match = error < 5e-4 as f32; //error needs to be smaller than one pixel on a 4k display
         if angles_match {
             counter += 1;
@@ -55,8 +55,8 @@ fn ray_connector_euclidian_tracing_test()  -> Result<(), String> {
         let output2 = control.update_ray(observer_pos, 5);
         let output_far = ray_connector_far.update_ray(observer_pos, 1);
         let output2_far = control_far.update_ray(observer_pos, 5);
-        let error = (output2[3] - output[3]).abs();
-        let error_far = (output2_far[3] - output_far[3]).abs();
+        let error = (output2 - output).abs();
+        let error_far = (output2_far - output_far).abs();
         let angles_match = error < 5e-4 as f32; //error needs to be smaller than one pixel on a 4k display
         let angles_match_far = error_far < 5e-4 as f32;
         if angles_match {

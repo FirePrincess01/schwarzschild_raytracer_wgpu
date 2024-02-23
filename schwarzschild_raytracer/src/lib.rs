@@ -1,6 +1,8 @@
 //! The main class of this programm, dealing with all the interactions with webgpu
 //! Basically the main file of this program
 
+mod resources;
+
 mod renderer;
 mod geometry;
 mod performance_monitor;
@@ -8,7 +10,9 @@ mod simulation;
 mod schwarzschild_sphere_shader;
 mod gui;
 mod schwarzschild_point_shader;
+mod schwarzschild_object_shader;
 
+use schwarzschild_object_shader::relativistic_model_wrapper::RelativisticModelWrapper;
 use schwarzschild_point_shader::point_cloud::PointCloud;
 use schwarzschild_sphere_shader::sphere_buffer::basic_sphere_buffer::BasicSphereBuffer;
 use wgpu_renderer::default_window;
@@ -34,6 +38,8 @@ struct SchwarzschildRaytracer {
     first_point_mesh: schwarzschild_point_shader::mesh::Mesh,
     first_point_mesh_farside: schwarzschild_point_shader::mesh::Mesh,
 
+    first_model: RelativisticModelWrapper,
+
     // gui
     font: rusttype::Font<'static>,
     gui: gui::Gui,
@@ -58,9 +64,9 @@ impl SchwarzschildRaytracer {
 
         let fps = wgpu_renderer::performance_monitor::Fps::new();
 
-        let texture_image = image::load_from_memory(include_bytes!("eso0932a.jpg")).unwrap();
-        let texture_image2 = image::load_from_memory(include_bytes!("world_8k.png")).unwrap();
-        let texture_image3 = image::load_from_memory(include_bytes!("transparent_clouds.png")).unwrap();
+        let texture_image = image::load_from_memory(include_bytes!("../resources/eso0932a.jpg")).unwrap();
+        let texture_image2 = image::load_from_memory(include_bytes!("../resources/world_8k.png")).unwrap();
+        let texture_image3 = image::load_from_memory(include_bytes!("../resources/transparent_clouds.png")).unwrap();
 
         let schwarz_r = renderer.get_schwarz_r();
         let first_sphere = BasicSphereBuffer::new(
@@ -87,9 +93,13 @@ impl SchwarzschildRaytracer {
             schwarz_r, 
             &texture_image3);
 
-        let first_point_cloud = PointCloud::new_accretion_disk(schwarz_r as f32, renderer.get_position(), true);
+        let observer_pos = renderer.get_position();
+        let first_point_cloud = PointCloud::new_heart(schwarz_r as f32, observer_pos, true);
         let first_point_mesh = schwarzschild_point_shader::mesh::Mesh::new(renderer.wgpu_renderer.device(), first_point_cloud.get_vertices(), None);
         let first_point_mesh_farside = schwarzschild_point_shader::mesh::Mesh::new(renderer.wgpu_renderer.device(), first_point_cloud.get_vertices_farside(), None);
+
+        let model = resources::load_model("cube.obj", &mut renderer.wgpu_renderer, &renderer.texture_bind_group_layout, true).await.unwrap();
+        let first_model = RelativisticModelWrapper::new(&mut renderer.wgpu_renderer, model, glam::Mat4::IDENTITY, schwarz_r as f32, observer_pos, true);
 
         //Gui
         let font_data = include_bytes!("../../wgpu_renderer/src/freefont/FreeMono.ttf");
@@ -114,6 +124,7 @@ impl SchwarzschildRaytracer {
             first_point_cloud,
             first_point_mesh,
             first_point_mesh_farside,
+            first_model,
 
             font,
             gui,
@@ -295,6 +306,9 @@ impl default_window::DefaultWindowApp for SchwarzschildRaytracer
             self.first_point_cloud.update(self.renderer.get_position(), dt);
             self.first_point_mesh.update_vertex_buffer(self.renderer.wgpu_renderer.queue(), self.first_point_cloud.get_vertices());
             self.first_point_mesh_farside.update_vertex_buffer(self.renderer.wgpu_renderer.queue(), self.first_point_cloud.get_vertices_farside());
+
+            let pos = self.renderer.get_position();
+            self.first_model.update(self.renderer.wgpu_renderer.queue(), pos);
         self.performance_monitor.watch.stop(3);
         
         self.performance_monitor.watch.start(4);
@@ -412,6 +426,7 @@ impl default_window::DefaultWindowApp for SchwarzschildRaytracer
         self.renderer.render(
             &[&self.first_sphere/*, &self.second_sphere , &self.third_sphere*/],
             &[&self.first_point_mesh, &self.first_point_mesh_farside],
+            &[& self.first_model],
             &self.gui,
             &mut self.performance_monitor)
     }

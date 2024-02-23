@@ -6,10 +6,11 @@ const SMALLEST_ANGLE: f32 = 0.05;
 pub struct RayConnector {
     schwarz_r: f32,
     pos: Vec3,
-    last_phi: f32,
+    orbit_angle: f32,
     less_than_180: bool,
     needs_reset: bool,
     u_ray: [f32; NR_NODES],
+    last_angle: f32,
 }
 
 impl RayConnector {
@@ -17,20 +18,22 @@ impl RayConnector {
         Self {
             schwarz_r,
             pos,
-            last_phi: 1.,
+            orbit_angle: 1.,
             less_than_180,
             needs_reset: true,
             u_ray: [1.; NR_NODES],
+            last_angle: 0.,
         }
     }
 
-    pub fn reset_ray(&mut self, other_position: Vec3) -> [f32; 4] {
+    //TODO use reference for position
+    pub fn reset_ray(&mut self, other_position: Vec3) -> f32 {
         self.needs_reset = false;
         let u0 = 1. / other_position.length();
         let u1 = 1. / self.pos.length();
-        self.last_phi = self.pos.angle_between(other_position);
+        self.orbit_angle = self.pos.angle_between(other_position);
         if !self.less_than_180 {
-            self.last_phi = std::f32::consts::TAU - self.last_phi;
+            self.orbit_angle = std::f32::consts::TAU - self.orbit_angle;
         }
 
         // A robust and fast initial guess
@@ -45,34 +48,35 @@ impl RayConnector {
 
     // Updates the ray and calculates the current incoming angle for other_position
     // The output is packed as [current_position, incoming_angle]
-    pub fn update_ray(&mut self, other_position: Vec3, iterations: usize) -> [f32; 4] {
+    pub fn update_ray(&mut self, other_position: Vec3, iterations: usize) -> f32 {
         if self.needs_reset {
             return self.reset_ray(other_position);
         }
         
-        self.last_phi = self.pos.angle_between(other_position);
+        self.orbit_angle = self.pos.angle_between(other_position);
         if !self.less_than_180 {
-            self.last_phi = std::f32::consts::TAU - self.last_phi;
+            self.orbit_angle = std::f32::consts::TAU - self.orbit_angle;
         }
 
         // If the angle is too small, the ray will follow a mostly straight path
         // Furthermore calculation would be unstable
         // Because u_ray isnt updated, it will need a reset later on
-        if self.last_phi < SMALLEST_ANGLE {
+        if self.orbit_angle < SMALLEST_ANGLE {
             self.needs_reset = true;
             let incoming_angle: f32;
-            if self.last_phi == 0. {
+            if self.orbit_angle == 0. {
                 incoming_angle = if other_position.length() > self.pos.length() {0.} else {std::f32::consts::PI};
             }
             else {
                 let u0 = other_position.length_recip();
-                let u_bar = (self.pos.length_recip() - u0) / self.last_phi - self.last_phi / 2. * (-u0 + 1.5 * self.schwarz_r * u0 * u0);
+                let u_bar = (self.pos.length_recip() - u0) / self.orbit_angle - self.orbit_angle / 2. * (-u0 + 1.5 * self.schwarz_r * u0 * u0);
                 incoming_angle = self.calc_ray_angle(u_bar, 1. / u0);
             }
             // No euclidian geometry allowed!
             //let incoming_angle = Vec3::angle_between(other_position - self.pos, - self.pos) 
             //    * if self.less_than_180 {1.} else {-1.};
-            return [self.pos.x, self.pos.y, self.pos.z, incoming_angle];
+            self.last_angle = incoming_angle;
+            return incoming_angle;
         }
 
         let u0 = other_position.length_recip();
@@ -96,7 +100,7 @@ impl RayConnector {
         // Solving (M_h + 3*R*diag(u_h))^-1 * (M_h * u_h + 3R/2 u_h^2) with fixed boundaries
         let mut residual: [f32; NR_NODES - 2] = [0.; NR_NODES - 2]; //Corresponds to u_ray without boundary
         let mut thomas_c: [f32; NR_NODES - 2] = [0.; NR_NODES - 2]; //Last entry is a dummy
-        let h = self.last_phi / (NR_NODES - 1) as f32;
+        let h = self.orbit_angle / (NR_NODES - 1) as f32;
         let scale =  1. / (h*h);
         for _k in 0..iterations {
             // index shifted to make the stencil more clear
@@ -128,11 +132,21 @@ impl RayConnector {
         //Time to calculate the angle
         let u_bar = (self.u_ray[1] - self.u_ray[0]) / h - h / 2. * (-self.u_ray[0] + 1.5 * self.schwarz_r * self.u_ray[0] * self.u_ray[0]); //Higher order scheme using u''
         let incoming_angle = self.calc_ray_angle(u_bar, u0.recip());
-        return [self.pos.x, self.pos.y, self.pos.z, incoming_angle];
+        self.last_angle = incoming_angle;
+        return incoming_angle;
     }
 
     pub fn set_position(&mut self, new_pos: Vec3) {
+        self.needs_reset = true;
         self.pos = new_pos;
+    }
+
+    pub fn get_position(&self) -> Vec3 {
+        return self.pos;
+    }
+
+    pub fn last_angle(&self) -> f32 {
+        return self.last_angle;
     }
 
     // Calculates the angle perceived by the frozen observer at radius r
@@ -161,7 +175,7 @@ impl RayConnector {
         let mut result = "polarplot( (0:".to_owned();
         result.push_str(&(NR_NODES-1).to_string());
         result.push_str(") *");
-        result.push_str(&(self.last_phi / NR_NODES as f32).to_string());
+        result.push_str(&(self.orbit_angle / NR_NODES as f32).to_string());
         result.push_str(", [");
         result.push_str(&(1. / self.u_ray[0]).to_string());
 

@@ -33,13 +33,13 @@ struct ObserverTransformations {
 var<uniform> observer: ObserverTransformations;
 
 // The ray fan interpolation for the sphere
-@group(1) @binding(0)
+@group(2) @binding(0)
 var ray_fan: texture_1d<f32>;
 
 // The graphical texture of the sphere
-@group(2) @binding(0)
+@group(1) @binding(0)
 var t_diffuse: texture_2d<f32>;
-@group(2) @binding(1)
+@group(1) @binding(1)
 var s_diffuse: sampler;
 
 // Transforms polar to carthesic coordinates

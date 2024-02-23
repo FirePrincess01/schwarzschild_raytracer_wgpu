@@ -62,11 +62,13 @@ impl BasicSphereBuffer {
     // We just cover the whole screen
     fn vertices() -> [Vertex; 4]
     {
+        let depth = 0.95;
+
         let vertices: [Vertex; 4] = [
-            Vertex { position: [-1., -1., 0.1] }, // A
-            Vertex { position: [1., -1., 0.1] }, // B
-            Vertex { position: [1., 1., 0.1] }, // C
-            Vertex { position: [-1., 1., 0.1] }, // D
+            Vertex { position: [-1., -1., depth] }, // A
+            Vertex { position: [1., -1., depth] }, // B
+            Vertex { position: [1., 1., depth] }, // C
+            Vertex { position: [-1., 1., depth] }, // D
         ];
 
         vertices
@@ -93,7 +95,7 @@ impl SchwarzschildSphereShaderDraw for BasicSphereBuffer {
     fn draw<'a>(&'a self, render_pass: &mut wgpu::RenderPass<'a>) {
         self.vertex_buffer.bind(render_pass);
         self.index_buffer.bind(render_pass);
-        render_pass.set_bind_group(2, &self.texture.bind_group, &[]);
+        self.texture.bind(render_pass);
         self.ray_fan.bind(render_pass);
 
         render_pass.draw_indexed(0..self.index_buffer.size(), 0, 0..1);

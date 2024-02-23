@@ -4,12 +4,13 @@
 use std::f64::consts::FRAC_PI_2;
 
 use crate::performance_monitor::PerformanceMonitor;
+use crate::schwarzschild_object_shader::schwarzschild_object_shader_draw::SchwarzschildObjectShaderDraw;
 use crate::schwarzschild_sphere_shader::schwarzschild_sphere_shader_draw::SchwarzschildSphereShaderDraw;
 use crate::schwarzschild_sphere_shader::sphere_observer_bind_group_layout::SphereObserverBindGroupLayout;
 use crate::schwarzschild_sphere_shader::sphere_observer_uniform_buffers::SphereObserverUniformBuffer;
 use crate::schwarzschild_sphere_shader::ray_fan_bind_group_layout;
 use crate::simulation::observer::Observer;
-use crate::{schwarzschild_sphere_shader, simulation, schwarzschild_point_shader};
+use crate::{schwarzschild_object_shader, schwarzschild_point_shader, schwarzschild_sphere_shader, simulation};
 use glam::{DVec2, Vec3};
 use wgpu_renderer::renderer::WgpuRenderer;
 use wgpu_renderer::vertex_color_shader::{self, VertexColorShaderDraw};
@@ -17,6 +18,7 @@ use wgpu_renderer::vertex_texture_shader::{self, VertexTextureShaderDraw};
 use winit::event::{VirtualKeyCode, ElementState, MouseScrollDelta};
 
 use super::observer_controller::ObserverController;
+use crate::schwarzschild_object_shader::model::{self, Model};
 
 pub struct Renderer 
 {   
@@ -32,6 +34,7 @@ pub struct Renderer
     pub texture_bind_group_layout: vertex_texture_shader::TextureBindGroupLayout,
 
     pipeline_schwarz_points: schwarzschild_point_shader::pipeline::Pipeline,
+    pipeline_schwarz_objects: schwarzschild_object_shader::pipeline::Pipeline,
 
     pipeline_lines: vertex_color_shader::Pipeline,
     pipeline_texture_gui: vertex_texture_shader::Pipeline,
@@ -112,6 +115,12 @@ impl Renderer {
             &sphere_observer_bind_group_layout, 
             surface_format);
 
+        let pipeline_schwarz_objects = schwarzschild_object_shader::pipeline::Pipeline::new(
+            wgpu_renderer.device(), 
+            &sphere_observer_bind_group_layout, 
+            &texture_bind_group_layout,
+            surface_format);
+
         Self {
             wgpu_renderer,
             observer,
@@ -129,6 +138,7 @@ impl Renderer {
             mouse_pressed: false,
             last_mouse_position: DVec2::ZERO,
             pipeline_schwarz_points,
+            pipeline_schwarz_objects,
         } 
     }
 
@@ -205,6 +215,7 @@ impl Renderer {
     pub fn render(&mut self, 
         spheres: &[&dyn SchwarzschildSphereShaderDraw],
         point_meshes: &[& schwarzschild_point_shader::mesh::Mesh],
+        models: &[&dyn SchwarzschildObjectShaderDraw],
         mesh_gui: & impl VertexTextureShaderDraw,
         performance_monitor: &mut PerformanceMonitor) -> Result<(), wgpu::SurfaceError>
     {
@@ -257,6 +268,10 @@ impl Renderer {
                 mesh.draw(&mut render_pass);
             }
 
+            self.pipeline_schwarz_objects.bind(&mut render_pass);
+            for model in models {
+                model.draw(&mut render_pass);
+            }
 
             // performance monitor
             self.pipeline_lines.bind(&mut render_pass);

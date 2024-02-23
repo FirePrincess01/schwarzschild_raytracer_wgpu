@@ -140,21 +140,39 @@ impl Orbit {
         let u_bar = self.u_bar;
         let schwarz_r = self.schwarz_r;
 
+
+        let k1_u = u_bar;
+        let k1_v = schwarz_r * (1. / (2. * l *l) + 3. / 2. * u * u) - u;
+        let mut u_temp = u + delta_phi / 2. * k1_u;
+        let k2_u = u_bar + delta_phi / 2. * k1_v;
+        let k2_v = schwarz_r * (1. / (2. * l *l) + 3. / 2. * u_temp * u_temp) - u_temp;
+        u_temp = u + delta_phi / 2. * k2_u;
+        let k3_u = u_bar + delta_phi / 2. * k2_v;
+        let k3_v = schwarz_r * (1. / (2. * l *l) + 3. / 2. * u_temp * u_temp) - u_temp;
+        u_temp = u + delta_phi * k1_u;
+        let k4_u = u_bar + delta_phi * k3_v;
+        let k4_v = schwarz_r * (1. / (2. * l *l) + 3. / 2. * u_temp * u_temp) - u_temp;
+
+        self.u += delta_phi * (k1_u + 2. * k2_u + 2. * k3_u + k4_u) / 6.;
+        self.u_bar += delta_phi * (k1_v + 2. * k2_v + 2. * k3_v + k4_v) / 6.;
+
+
         //Runge Kutta 4 scheme
-        let a_u = u + delta_phi / 2. * u_bar;
-        let a_u_bar = u_bar + delta_phi / 2. * (schwarz_r * (1. / (2. * l *l) + 3. / 2. * u * u) - u);
-        let b_u = u + delta_phi / 2. * a_u_bar;
-        let b_u_bar = u_bar + delta_phi / 2. * (schwarz_r * (1. / (2. * l *l) + 3. / 2. * a_u * a_u) - a_u);
-        let c_u = u + delta_phi * b_u_bar;
-        let c_u_bar = u_bar + delta_phi * (schwarz_r * (1. / (2. * l *l) + 3. / 2. * b_u * b_u) - b_u);
-        let next_u = u + delta_phi * (u_bar / 6. + a_u_bar / 3. + b_u_bar / 3. + c_u_bar / 6.);
-        let next_u_bar = u_bar + delta_phi * (schwarz_r / (2. * l*l) +
-            3. * schwarz_r / 2. * (u * u / 6. + a_u * a_u / 3. + b_u * b_u / 3. + c_u * c_u / 6.)
-            - (u + 2. * a_u + 2. * b_u + c_u) / 6.);
+        // let a_u = u + delta_phi / 2. * u_bar;
+        // let a_u_bar = u_bar + delta_phi / 2. * (schwarz_r * (1. / (2. * l *l) + 3. / 2. * u * u) - u);
+        // let b_u = u + delta_phi / 2. * a_u_bar;
+        // let b_u_bar = u_bar + delta_phi / 2. * (schwarz_r * (1. / (2. * l *l) + 3. / 2. * a_u * a_u) - a_u);
+        // let c_u = u + delta_phi * b_u_bar;
+        // let c_u_bar = u_bar + delta_phi * (schwarz_r * (1. / (2. * l *l) + 3. / 2. * b_u * b_u) - b_u);
+        
+        //let next_u = u + delta_phi * (u_bar / 6. + a_u_bar / 3. + b_u_bar / 3. + c_u_bar / 6.);
+        // let next_u_bar = u_bar + delta_phi * (schwarz_r / (2. * l*l) +
+        //     3. * schwarz_r / 2. * (u * u / 6. + a_u * a_u / 3. + b_u * b_u / 3. + c_u * c_u / 6.)
+        //     - (u + 2. * a_u + 2. * b_u + c_u) / 6.);
 
         
-        self.u = next_u;
-        self.u_bar = next_u_bar;
+        // self.u = next_u;
+        // self.u_bar = next_u_bar;
         // TODO: handle u < 0 ?
         if self.u.is_infinite() || self.u > 100.{
             self.has_hit_singularity = true;
