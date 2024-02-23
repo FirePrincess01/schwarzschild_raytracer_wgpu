@@ -15,34 +15,30 @@ test = false
 doc = false
 
 [dependencies]
-# dependencies for wgpu 
-cfg-if = "1"
-env_logger = "0.10"
-winit = "0.28"
-pollster = "0.3"
-wgpu = "0.17"
-instant = "0.1"
-cgmath = "0.18"
-glam = "0.24"
 # wgpu_renderer = { git = "https://github.com/FirePrincess01/wgpu_renderer.git", branch = "main" } 
 wgpu_renderer = { path = "../wgpu_renderer" }
-# other  
-log = "0.4"
+cfg-if = "1"
+winit = "0.29"
 bytemuck = { version = "1.12", features = [ "derive" ] }
-
-rusttype = "0.9"
+glam = "0.25"
 fastrand = "2.0"
+rusttype = "0.9"
+
 
 [dependencies.image]
 version = "0.24"
-default-features = false
 features = ["png", "jpeg"]
+
+[target.'cfg(target_arch = "x86_64")'.dependencies]
+wgpu = { version = "0.19" }
+instant = "0.1"
+pollster = "0.3" 
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 console_error_panic_hook = "0.1.6"
-log = "0.4"
 console_log = "1.0.0"
-wgpu = { version = "0.17", features = [ "webgl" ]}
+instant = { version = "0.1", features = [ "wasm-bindgen" ] }
+wgpu = { version = "0.19", default-features = false, features = [ "webgl", "wgsl"  ]}
 wasm-bindgen = "0.2"
 wasm-bindgen-futures = "0.4"
 web-sys = { version = "0.3", features = [

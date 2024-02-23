@@ -14,14 +14,14 @@ use glam::{DVec2, Vec3};
 use wgpu_renderer::renderer::WgpuRenderer;
 use wgpu_renderer::vertex_color_shader::{self, VertexColorShaderDraw};
 use wgpu_renderer::vertex_texture_shader::{self, VertexTextureShaderDraw};
-use winit::event::{VirtualKeyCode, ElementState, MouseScrollDelta};
+use winit::event::{ElementState, MouseScrollDelta};
 
 use super::observer_controller::ObserverController;
 
-pub struct Renderer 
+pub struct Renderer<'a>
 {   
     // wgpu_renderer
-    pub wgpu_renderer: WgpuRenderer,
+    pub wgpu_renderer: WgpuRenderer<'a>,
 
     pub observer: simulation::observer::Observer,
 
@@ -45,11 +45,14 @@ pub struct Renderer
     last_mouse_position: DVec2,
 }
 
-impl Renderer {
-    pub async fn new(window: &winit::window::Window) -> Self 
+impl<'a> Renderer<'a> {
+    pub async fn new(window: &'a winit::window::Window) -> Self 
     {   
         // wgpu renderer
-        let mut wgpu_renderer = WgpuRenderer::new(window).await; 
+        let present_mode_vsync_off = wgpu::PresentMode::Immediate;
+        let _present_mode_vsync_on = wgpu::PresentMode::Fifo;
+
+        let mut wgpu_renderer = WgpuRenderer::new(window, Some(present_mode_vsync_off)).await; 
         let surface_format = wgpu_renderer.config().format;
         let surface_width = wgpu_renderer.config().width;
         let surface_height = wgpu_renderer.config().height;
@@ -157,22 +160,22 @@ impl Renderer {
         // self.camera_uniform_buffer.update(self.wgpu_renderer.queue(), self.camera_uniform);
     }
 
-    pub fn process_keyboard(&mut self, key: VirtualKeyCode, state: ElementState) -> bool 
+    pub fn process_keyboard(&mut self, key: winit::keyboard::KeyCode, state: ElementState) -> bool 
     {
         let res = match key {
-            VirtualKeyCode::Key1 => {
+            winit::keyboard::KeyCode::Digit1 => {
                 self.observer.start_unmoving();
                 true
             },
-            VirtualKeyCode::Key2 => {
+            winit::keyboard::KeyCode::Digit2 => {
                 self.observer.start_frozen_fall();
                 true
             },
-            VirtualKeyCode::Key3 => {
+            winit::keyboard::KeyCode::Digit3 => {
                 self.observer.start_orbit(0.);
                 true
             },
-            VirtualKeyCode::Key4 => {
+            winit::keyboard::KeyCode::Digit4 => {
                 self.observer.start_orbit(18.);
                 true
             },
@@ -233,17 +236,19 @@ impl Renderer {
                             b: 0.,
                             a: 1.0,
                         }),
-                        store: true,
+                        store: wgpu::StoreOp::Store,
                     }
                 })], 
                 depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
                     view: self.wgpu_renderer.get_depth_texture_view(),
                     depth_ops: Some(wgpu::Operations {
                         load: wgpu::LoadOp::Clear(1.0),
-                        store: true,
+                        store: wgpu::StoreOp::Store,
                     }),
                     stencil_ops: None,
-                }) 
+                }),
+                timestamp_writes: Default::default(),
+                occlusion_query_set: Default::default(),
             });
 
             self.pipeline_sphere.bind(&mut render_pass);
