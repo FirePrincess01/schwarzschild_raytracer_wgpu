@@ -42,30 +42,30 @@ impl ObserverController {
         }
     }
 
-    pub fn process_keyboard(&mut self, key: VirtualKeyCode, state: ElementState) -> bool{
+    pub fn process_keyboard(&mut self, key: winit::keyboard::KeyCode, state: ElementState) -> bool{
         let amount = if state == ElementState::Pressed { 1.0 } else { 0.0 };
         match key {
-            VirtualKeyCode::W | VirtualKeyCode::Up => {
+            winit::keyboard::KeyCode::KeyW | winit::keyboard::KeyCode::ArrowUp => {
                 self.amount_forward = amount;
                 true
             }
-            VirtualKeyCode::S | VirtualKeyCode::Down => {
+            winit::keyboard::KeyCode::KeyS | winit::keyboard::KeyCode::ArrowDown => {
                 self.amount_backward = amount;
                 true
             }
-            VirtualKeyCode::A | VirtualKeyCode::Left => {
+            winit::keyboard::KeyCode::KeyA | winit::keyboard::KeyCode::ArrowLeft => {
                 self.amount_left = amount;
                 true
             }
-            VirtualKeyCode::D | VirtualKeyCode::Right => {
+            winit::keyboard::KeyCode::KeyD | winit::keyboard::KeyCode::ArrowRight => {
                 self.amount_right = amount;
                 true
             }
-            VirtualKeyCode::Space => {
+            winit::keyboard::KeyCode::Space => {
                 self.amount_up = amount;
                 true
             }
-            VirtualKeyCode::LShift => {
+            winit::keyboard::KeyCode::ShiftLeft => {
                 self.amount_down = amount;
                 true
             }
