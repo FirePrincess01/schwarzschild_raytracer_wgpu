@@ -6,3 +6,5 @@ pub mod vertex;
 pub mod model;
 pub mod relativistic_model_wrapper;
 pub mod schwarzschild_object_shader_draw;
+pub mod model_matrix_bind_group_layout;
+pub mod model_matrix_uniform_buffers;

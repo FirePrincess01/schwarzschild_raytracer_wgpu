@@ -4,7 +4,7 @@
 
 use std::f64::consts::PI;
 
-use image::DynamicImage;
+//use image::DynamicImage;
 use wgpu_renderer::{vertex_texture_shader::{Texture, IndexBuffer, TextureBindGroupLayout}, vertex_color_shader::{Vertex, VertexBuffer}, renderer::WgpuRendererInterface};
 
 use crate::{schwarzschild_sphere_shader::{ray_fan_texture::RayFanTexture, ray_fan_bind_group_layout::RayFanBindGroupLayout, schwarzschild_sphere_shader_draw::SchwarzschildSphereShaderDraw}, simulation::sphere_ray_tracer::SphereRayTracer};
@@ -18,22 +18,28 @@ pub struct BasicSphereBuffer{
 }
 
 impl BasicSphereBuffer {
-    pub fn new(wgpu_renderer: &mut impl WgpuRendererInterface, 
+    pub async fn new(wgpu_renderer: &mut impl WgpuRendererInterface, 
         texture_bind_group_layout: &TextureBindGroupLayout,
         ray_fan_bind_group_layout: &RayFanBindGroupLayout,
         sphere_radius: f64,
         schwarz_radius: f64,
-        texture_image: &DynamicImage,
+        texture_name: String,//&DynamicImage,
     ) -> Self{
 
-        let texture_rgba = texture_image.to_rgba8();
-
-        let texture = Texture::new_with_mipmaps(
+        let texture = crate::resources::load_texture(&texture_name, 
             wgpu_renderer, 
-            &texture_bind_group_layout, 
-            &texture_rgba, 
-            Some(&("Sphere r".to_owned() + &sphere_radius.to_string() + " texture")),
-            4).unwrap();
+            &texture_bind_group_layout, 4)
+            .await.unwrap();
+
+        //We used to do it this way, delete soon
+        //let texture_rgba = texture_image.to_rgba8();
+
+        // let texture = Texture::new_with_mipmaps(
+        //     wgpu_renderer, 
+        //     &texture_bind_group_layout, 
+        //     &texture_rgba, 
+        //     Some(&("Sphere r".to_owned() + &sphere_radius.to_string() + " texture")),
+        //     4).unwrap();
 
         let vertex_buffer = VertexBuffer::new(wgpu_renderer.device(), 
             &Self::vertices());

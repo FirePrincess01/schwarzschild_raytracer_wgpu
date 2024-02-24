@@ -12,8 +12,8 @@ fn format_url(file_name: &str) -> reqwest::Url {
     let window = web_sys::window().unwrap();
     let location = window.location();
     let mut origin = location.origin().unwrap();
-    if !origin.ends_with("learn-wgpu") {
-        origin = format!("{}/learn-wgpu", origin);
+    if !origin.ends_with("schwarzschild_raytracer/resources") {
+        origin = format!("{}/schwarzschild_raytracer/resources", origin);
     }
     let base = reqwest::Url::parse(&format!("{}/", origin,)).unwrap();
     base.join(file_name).unwrap()
@@ -95,7 +95,7 @@ pub async fn load_model(
 
     let mut materials = Vec::new();
     for m in obj_materials? {
-        let diffuse_texture = load_texture(&m.diffuse_texture.unwrap(), wgpu_renderer, texture_bind_group_layout, 1).await?;
+        let diffuse_texture = load_texture(&m.diffuse_texture.unwrap(), wgpu_renderer, texture_bind_group_layout, 4).await?;
 
         materials.push(model::Material {
             name: m.name,
@@ -108,7 +108,7 @@ pub async fn load_model(
             .map(|i| crate::schwarzschild_object_shader::vertex::Vertex {
                 position: [
                     m.mesh.positions[i * 3],
-                    m.mesh.positions[i * 3 + 1] + 15.,
+                    m.mesh.positions[i * 3 + 1],
                     m.mesh.positions[i * 3 + 2],
                 ],
                 tex_coords: [m.mesh.texcoords[i * 2], 1.0 - m.mesh.texcoords[i * 2 + 1]],
@@ -146,7 +146,7 @@ pub async fn load_model(
             (0..m.mesh.positions.len() / 3)
                 .map(|i| Vec3::new( 
                         m.mesh.positions[i * 3],
-                        m.mesh.positions[i * 3 + 1] + 15.,
+                        m.mesh.positions[i * 3 + 1],
                         m.mesh.positions[i * 3 + 2],
                 ))
                 .collect::<Vec<_>>()

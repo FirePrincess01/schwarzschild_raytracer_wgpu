@@ -39,7 +39,9 @@
 			"label": "cargo run --release",
 			"type": "cargo",
 			"command": "run",
-			"args": ["--release"],
+			"args": [
+				"--release"
+			],
 			"problemMatcher": [
 				"$rustc"
 			],
@@ -56,7 +58,6 @@
 		{
 			"label": "wasm-pack",
 			"type": "shell",
-			// "command": "RUSTFLAGS=--cfg=web_sys_unstable_apis wasm-pack build --target web",
 			"command": "wasm-pack build schwarzschild_raytracer --target web",
 			"problemMatcher": [
 				"$rustc"
@@ -74,10 +75,10 @@
 			"label": "python server",
 			"type": "shell",
 			"windows": {
-				"command": "python -m http.server 8000",
+				"command": "python -m http.server 8000"
 			},
 			"linux": {
-				"command": "python3 -m http.server 8000",
+				"command": "python3 -m http.server 8000"
 			},
 			"problemMatcher": []
 		}

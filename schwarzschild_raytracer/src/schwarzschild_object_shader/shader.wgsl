@@ -26,6 +26,8 @@ struct ObserverTransformations {
 }
 @group(0) @binding(0)
 var<uniform> observer: ObserverTransformations;
+@group(2) @binding(0)
+var<uniform> model_matrix: mat4x4<f32>;
 
 // Transforms polar to carthesic coordinates
 // Polar coordinates are [0, 2pi]x[-pi/2, pi/2]
@@ -42,13 +44,10 @@ fn to_polar(cartVec: vec4<f32>) -> vec2<f32> {
 //This shader transforms the vertices backwards through the pipeline onto the screen
 @vertex 
 fn vs_main(vertex: VertexInput, angle: AngleInput) -> VertexOutput {
-    var carthesic = vec4<f32>(vertex.position, 0.);
-
-
-    //Here we need to transform the model instance
-
-
-    
+    //apply the model transformation
+    var carthesic = vec4<f32>(vertex.position, 1.);
+    carthesic = model_matrix * carthesic;
+    carthesic.w = 0.;
 
     //Project onto normal plane
     carthesic = carthesic * observer.central_to_uv;

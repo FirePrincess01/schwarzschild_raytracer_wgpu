@@ -118,12 +118,12 @@ impl  MovementButtons {
             &[instance]);
 
         let textures = vec![
-            create_texture(wgpu_renderer, &texture_bind_group_layout, include_bytes!("assets/view.png")),
-            create_texture(wgpu_renderer, &texture_bind_group_layout, include_bytes!("assets/view.png")),
-            create_texture(wgpu_renderer, &texture_bind_group_layout, include_bytes!("assets/view.png")),
-            create_texture(wgpu_renderer, &texture_bind_group_layout, include_bytes!("assets/performance.png")),
-            create_texture(wgpu_renderer, &texture_bind_group_layout, include_bytes!("assets/mode.png")),
-            create_texture(wgpu_renderer, &texture_bind_group_layout, include_bytes!("assets/mode.png")),
+            create_texture(wgpu_renderer, &texture_bind_group_layout, include_bytes!("assets/move_up.png")),
+            create_texture(wgpu_renderer, &texture_bind_group_layout, include_bytes!("assets/move_forward.png")),
+            create_texture(wgpu_renderer, &texture_bind_group_layout, include_bytes!("assets/move_down.png")),
+            create_texture(wgpu_renderer, &texture_bind_group_layout, include_bytes!("assets/move_left.png")),
+            create_texture(wgpu_renderer, &texture_bind_group_layout, include_bytes!("assets/move_back.png")),
+            create_texture(wgpu_renderer, &texture_bind_group_layout, include_bytes!("assets/move_right.png")),
         ];
 
         let mut obj = Self {

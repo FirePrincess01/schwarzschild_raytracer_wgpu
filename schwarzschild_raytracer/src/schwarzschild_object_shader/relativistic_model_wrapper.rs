@@ -1,20 +1,24 @@
-//! This class contains a normal model and adds computation and buffers for the light rays
+//! This class contains a regular model and adds computation and buffers for the light rays
 
 use glam::Vec3;
 use crate::simulation::ray_connector::RayConnector;
-use wgpu::util::DeviceExt;
+use wgpu::{core::instance, util::DeviceExt};
 
-use super::schwarzschild_object_shader_draw::SchwarzschildObjectShaderDraw;
+use super::{model_matrix_bind_group_layout::ModelMatrixBindGroupLayout, model_matrix_uniform_buffers::ModelMatrixUniformBuffer, schwarzschild_object_shader_draw::SchwarzschildObjectShaderDraw};
 
 pub struct RelativisticModelWrapper {
     model: super::model::Model,
+
     pub model_matrix: glam::Mat4,
-    //uniform buffer
-    light_buffers: Vec<wgpu::Buffer>, 
-    light_buffers_farside: Vec<wgpu::Buffer>,
+    matrix_buffer: ModelMatrixUniformBuffer,
+
     has_farside: bool,
     points: Vec<Vec<RayConnector>>,
     points_farside: Vec<Vec<RayConnector>>,
+    light_buffers: Vec<wgpu::Buffer>, 
+    light_buffers_farside: Vec<wgpu::Buffer>,
+
+    start_time: instant::Instant,
 }
 
 impl RelativisticModelWrapper {
@@ -24,10 +28,14 @@ impl RelativisticModelWrapper {
     
     pub fn new(wgpu_renderer: &mut impl wgpu_renderer::renderer::WgpuRendererInterface, 
         model: super::model::Model, model_matrix: glam::Mat4, 
+        matrix_bind_group_layout: &ModelMatrixBindGroupLayout,
         schwarz_r: f32, observer_pos: Vec3, has_farside: bool) -> Self {
+            
+        let matrix_buffer = ModelMatrixUniformBuffer::new(wgpu_renderer.device(), matrix_bind_group_layout);
+
         let points = model.positions.iter().map(|mesh|{
             mesh.iter().map(|pos| {
-                let mut ray = RayConnector::new(schwarz_r, *pos, true);
+                let mut ray = RayConnector::new(schwarz_r, model_matrix.transform_point3(*pos), true);
                 ray.reset_ray(observer_pos);
                 ray
             })
@@ -39,7 +47,7 @@ impl RelativisticModelWrapper {
         if has_farside {
             points_farside = model.positions.iter().map(|mesh|{
                 mesh.iter().map(|pos| {
-                    let mut ray = RayConnector::new(schwarz_r, *pos, false);
+                    let mut ray = RayConnector::new(schwarz_r, model_matrix.transform_point3(*pos), false);
                     ray.reset_ray(observer_pos);
                     ray
                 })
@@ -84,11 +92,13 @@ impl RelativisticModelWrapper {
         Self {
             model,
             model_matrix,
+            matrix_buffer,
             light_buffers,
             light_buffers_farside,
             has_farside,
             points,
             points_farside,
+            start_time: instant::Instant::now(),
         }
     }
 
@@ -98,6 +108,27 @@ impl RelativisticModelWrapper {
     }
 
     pub fn update(&mut self, queue: &wgpu::Queue, observer_pos: Vec3) {
+        //self.model_matrix = self.model_matrix * glam::Mat4::from_rotation_z(0.002);
+        let seconds = (instant::Instant::now() - self.start_time).as_secs_f32();
+        self.model_matrix = glam::Mat4::from_rotation_z(0.2 * seconds) *
+            glam::Mat4::from_translation(Vec3::new(20., 0., 0.)) *
+            glam::Mat4::from_rotation_z(1. * seconds) * 
+            glam::Mat4::from_scale(Vec3::new(3., 3., 3.));
+        self.matrix_buffer.update(queue, &self.model_matrix);
+
+        for i in 0..self.points.len() {
+            for j in 0..self.points[i].len() {
+                let pos = self.model_matrix.transform_point3(self.model.positions[i][j]);
+                
+                self.points[i][j].set_position(pos);
+                if self.has_farside
+                {
+                    self.points_farside[i][j].set_position(pos);
+                }
+            }
+
+        }
+        
         for i in 0..self.points.len() {
             self.points[i].iter_mut().for_each(|point| { 
                 point.update_ray(observer_pos, 1); 
@@ -131,19 +162,17 @@ impl RelativisticModelWrapper {
                 }
             }
         }
-
-        //maybe move the object?
-
-        //update the model matrix too!
     }
 }
 
 impl SchwarzschildObjectShaderDraw for RelativisticModelWrapper {
     fn draw<'a>(&'a self, render_pass: &mut wgpu::RenderPass<'a>) {
+        self.matrix_buffer.bind(render_pass);
+
         for i in 0..self.points.len() {
             let num_elements = self.model.meshes[i].num_elements;
             self.model.meshes[i].bind(render_pass);
-            //self.model.materials[self.model.meshes[i].material].diffuse_texture.bind(render_pass);
+            self.model.materials[self.model.meshes[i].material].diffuse_texture.bind(render_pass);
 
             render_pass.set_vertex_buffer(1, self.light_buffers[i].slice(..));
             render_pass.draw_indexed(0..num_elements, 0, 0..1);

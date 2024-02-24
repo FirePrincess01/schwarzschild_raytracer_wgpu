@@ -1,9 +1,9 @@
-//! A specialized shader pipeline to render spheres centered on a black hole
+//! A specialized shader pipeline to render 3d meshes around a black hole
 //!
 
 use wgpu::BlendState;
 use wgpu_renderer::{renderer::depth_texture::DepthTexture, vertex_texture_shader::TextureBindGroupLayout};
-use super::vertex::Vertex;
+use super::{model_matrix_bind_group_layout::{self, ModelMatrixBindGroupLayout}, vertex::Vertex};
 
 use crate::schwarzschild_sphere_shader::sphere_observer_bind_group_layout::SphereObserverBindGroupLayout;
 
@@ -19,6 +19,7 @@ impl Pipeline
         device: &wgpu::Device, 
         sphere_observer_bind_group_layout: &SphereObserverBindGroupLayout,
         texture_bind_group_layout: &TextureBindGroupLayout,
+        model_matrix_bind_group_layout: &ModelMatrixBindGroupLayout,
         surface_format: wgpu::TextureFormat,
     ) -> Self
     {
@@ -35,6 +36,7 @@ impl Pipeline
                 bind_group_layouts: &[
                     &sphere_observer_bind_group_layout.get(),
                     &texture_bind_group_layout.get(),
+                    &model_matrix_bind_group_layout.get(),
                 ],
                 push_constant_ranges: &[],
             });

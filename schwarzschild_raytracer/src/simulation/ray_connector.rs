@@ -136,8 +136,12 @@ impl RayConnector {
         return incoming_angle;
     }
 
+    // Sets the point to a new position
+    // Resets the ray if the position moves by more than 0.1
     pub fn set_position(&mut self, new_pos: Vec3) {
-        self.needs_reset = true;
+        if self.pos.distance_squared(new_pos) > 0.01 {
+            self.needs_reset = true;
+        }
         self.pos = new_pos;
     }
 

@@ -4,6 +4,7 @@
 use std::f64::consts::FRAC_PI_2;
 
 use crate::performance_monitor::PerformanceMonitor;
+use crate::schwarzschild_object_shader::model_matrix_bind_group_layout::ModelMatrixBindGroupLayout;
 use crate::schwarzschild_object_shader::schwarzschild_object_shader_draw::SchwarzschildObjectShaderDraw;
 use crate::schwarzschild_sphere_shader::schwarzschild_sphere_shader_draw::SchwarzschildSphereShaderDraw;
 use crate::schwarzschild_sphere_shader::sphere_observer_bind_group_layout::SphereObserverBindGroupLayout;
@@ -31,6 +32,7 @@ pub struct Renderer<'a>
     pub sphere_observer_bind_group_layout: SphereObserverBindGroupLayout,
     pub sphere_observer_uniform_buffer: SphereObserverUniformBuffer,
     pub texture_bind_group_layout: vertex_texture_shader::TextureBindGroupLayout,
+    pub model_matrix_bind_group_layout: ModelMatrixBindGroupLayout,
 
     pipeline_schwarz_points: schwarzschild_point_shader::pipeline::Pipeline,
     pipeline_schwarz_objects: schwarzschild_object_shader::pipeline::Pipeline,
@@ -62,6 +64,7 @@ impl<'a> Renderer<'a> {
         
         let ray_fan_bind_group_layout = ray_fan_bind_group_layout::RayFanBindGroupLayout::new(wgpu_renderer.device());
         let sphere_observer_bind_group_layout = SphereObserverBindGroupLayout::new(wgpu_renderer.device());
+        let model_matrix_bind_group_layout = ModelMatrixBindGroupLayout::new(wgpu_renderer.device());
         let texture_bind_group_layout = vertex_texture_shader::TextureBindGroupLayout::new(wgpu_renderer.device());
         let pipeline_sphere = schwarzschild_sphere_shader::pipeline::Pipeline::new(
             wgpu_renderer.device(),
@@ -97,7 +100,7 @@ impl<'a> Renderer<'a> {
 
 
         // processes user inputs regarding movement and camera
-        let speed = 8.0;
+        let speed = 32.0;
         let sensitivity = 1.0;
         let sensitivity_scroll = 1.0;
         let camera_controller = super::observer_controller::ObserverController::new(speed, sensitivity, sensitivity_scroll);
@@ -121,6 +124,7 @@ impl<'a> Renderer<'a> {
             wgpu_renderer.device(), 
             &sphere_observer_bind_group_layout, 
             &texture_bind_group_layout,
+            &model_matrix_bind_group_layout,
             surface_format);
 
         Self {
@@ -131,6 +135,7 @@ impl<'a> Renderer<'a> {
             sphere_observer_bind_group_layout,
             sphere_observer_uniform_buffer,
             texture_bind_group_layout,
+            model_matrix_bind_group_layout,
             pipeline_lines,
             camera_bind_group_layout,
             pipeline_texture_gui,

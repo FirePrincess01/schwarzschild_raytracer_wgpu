@@ -14,6 +14,7 @@ mod gui;
 mod schwarzschild_point_shader;
 mod schwarzschild_object_shader;
 
+use glam::Vec3;
 use schwarzschild_object_shader::relativistic_model_wrapper::RelativisticModelWrapper;
 use schwarzschild_point_shader::point_cloud::PointCloud;
 use schwarzschild_sphere_shader::sphere_buffer::basic_sphere_buffer::BasicSphereBuffer;
@@ -66,9 +67,13 @@ impl<'a> SchwarzschildRaytracer<'a> {
 
         let fps = wgpu_renderer::performance_monitor::Fps::new();
 
-        let texture_image = image::load_from_memory(include_bytes!("../resources/eso0932a.jpg")).unwrap();
-        let texture_image2 = image::load_from_memory(include_bytes!("../resources/world_8k.png")).unwrap();
-        let texture_image3 = image::load_from_memory(include_bytes!("../resources/transparent_clouds.png")).unwrap();
+        // let texture_image = image::load_from_memory(include_bytes!("../resources/")).unwrap();
+        // let texture_image2 = image::load_from_memory(include_bytes!("../resources/world_8k.png")).unwrap();
+        // let texture_image3 = image::load_from_memory(include_bytes!("../resources/transparent_clouds.png")).unwrap();
+
+        // let texture_image = resources::load_texture("eso0932a.jpg", &mut renderer.wgpu_renderer, &renderer.texture_bind_group_layout, 4).await.unwrap();
+        // let texture_image2 = resources::load_texture("world_8k.png", &mut renderer.wgpu_renderer, &renderer.texture_bind_group_layout, 4).await.unwrap();
+        // let texture_image3 = resources::load_texture("transparent_clouds.png", &mut renderer.wgpu_renderer, &renderer.texture_bind_group_layout, 4).await.unwrap();
 
         let schwarz_r = renderer.get_schwarz_r();
         let first_sphere = BasicSphereBuffer::new(
@@ -77,7 +82,7 @@ impl<'a> SchwarzschildRaytracer<'a> {
             &renderer.ray_fan_bind_group_layout, 
             500., 
             schwarz_r, 
-            &texture_image);
+            "eso0932a.jpg".to_string()).await;
 
         let second_sphere = BasicSphereBuffer::new(
             &mut renderer.wgpu_renderer, 
@@ -85,7 +90,7 @@ impl<'a> SchwarzschildRaytracer<'a> {
             &renderer.ray_fan_bind_group_layout, 
             11., 
             schwarz_r, 
-            &texture_image2);
+            "world_8k.png".to_string()).await;
 
         let third_sphere = BasicSphereBuffer::new(
             &mut renderer.wgpu_renderer, 
@@ -93,15 +98,18 @@ impl<'a> SchwarzschildRaytracer<'a> {
             &renderer.ray_fan_bind_group_layout, 
             12., 
             schwarz_r, 
-            &texture_image3);
+            "transparent_clouds.png".to_string()).await;
 
         let observer_pos = renderer.get_position();
         let first_point_cloud = PointCloud::new_heart(schwarz_r as f32, observer_pos, true);
         let first_point_mesh = schwarzschild_point_shader::mesh::Mesh::new(renderer.wgpu_renderer.device(), first_point_cloud.get_vertices(), None);
         let first_point_mesh_farside = schwarzschild_point_shader::mesh::Mesh::new(renderer.wgpu_renderer.device(), first_point_cloud.get_vertices_farside(), None);
 
-        let model = resources::load_model("cube.obj", &mut renderer.wgpu_renderer, &renderer.texture_bind_group_layout, true).await.unwrap();
-        let first_model = RelativisticModelWrapper::new(&mut renderer.wgpu_renderer, model, glam::Mat4::IDENTITY, schwarz_r as f32, observer_pos, true);
+        let model = resources::load_model("Moon_2K.obj", &mut renderer.wgpu_renderer, &renderer.texture_bind_group_layout, true).await.unwrap();
+        let first_model = RelativisticModelWrapper::new(&mut renderer.wgpu_renderer, model, 
+            glam::Mat4::from_translation(Vec3::new(0., 15., 0.)), 
+            &renderer.model_matrix_bind_group_layout, 
+            schwarz_r as f32, observer_pos, true);
 
         //Gui
         let font_data = include_bytes!("../../wgpu_renderer/src/freefont/FreeMono.ttf");
@@ -426,7 +434,7 @@ impl<'a> default_window::DefaultWindowApp for SchwarzschildRaytracer<'a>
 
     fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
         self.renderer.render(
-            &[&self.first_sphere/*, &self.second_sphere , &self.third_sphere*/],
+            &[&self.first_sphere, &self.second_sphere , &self.third_sphere],
             &[&self.first_point_mesh, &self.first_point_mesh_farside],
             &[& self.first_model],
             &self.gui,
