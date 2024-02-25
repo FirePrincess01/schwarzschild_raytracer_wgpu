@@ -5,7 +5,6 @@
 
 
 use wgpu_renderer::renderer;
-
 use super::ray_fan_bind_group_layout::RayFanBindGroupLayout;
 
 pub struct RayFanTexture {

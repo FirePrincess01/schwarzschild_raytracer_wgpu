@@ -1,9 +1,11 @@
 //! A specialized shader pipeline to render 3d meshes around a black hole
-//!
+//! This renders textured vertices with the incoming angles calculated on the CPU
 
 use wgpu::BlendState;
-use wgpu_renderer::{renderer::depth_texture::DepthTexture, vertex_texture_shader::TextureBindGroupLayout};
-use super::{model_matrix_bind_group_layout::{self, ModelMatrixBindGroupLayout}, vertex::Vertex};
+use wgpu_renderer::renderer::depth_texture::DepthTexture;
+use wgpu_renderer::vertex_texture_shader::TextureBindGroupLayout;
+use super::model_matrix_bind_group_layout::ModelMatrixBindGroupLayout;
+use super::vertex::Vertex;
 
 use crate::schwarzschild_sphere_shader::sphere_observer_bind_group_layout::SphereObserverBindGroupLayout;
 

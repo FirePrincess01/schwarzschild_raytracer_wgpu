@@ -1,11 +1,10 @@
 //! A bind group to create observer uniform buffers for this shader
 //!
-#[allow(dead_code)]
+
 pub struct SphereObserverBindGroupLayout {
     sphere_observer_bind_group_layout: wgpu::BindGroupLayout,
 }
 
-#[allow(dead_code)]
 impl SphereObserverBindGroupLayout {
 
     pub fn new(device: &wgpu::Device) -> Self {

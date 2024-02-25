@@ -1,5 +1,6 @@
 //! A specialized shader pipeline to render spheres centered on a black hole
-//!
+//! It contains a trivial vertex shader just covering the screen,
+//! followed by a fragment shader casting each pixel onto the sphere and reading the texture
 
 use wgpu::BlendState;
 use wgpu_renderer::renderer::depth_texture::DepthTexture;

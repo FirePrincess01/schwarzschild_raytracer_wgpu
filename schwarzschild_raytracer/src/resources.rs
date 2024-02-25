@@ -7,6 +7,7 @@ use glam::Vec3;
 use wgpu::util::DeviceExt;
 use crate::schwarzschild_object_shader::model;
 
+// For wasm you need to manually copy the resources folder
 #[cfg(target_arch = "wasm32")]
 fn format_url(file_name: &str) -> reqwest::Url {
     let window = web_sys::window().unwrap();
@@ -19,6 +20,7 @@ fn format_url(file_name: &str) -> reqwest::Url {
     base.join(file_name).unwrap()
 }
 
+// Loads a text file from the resources folder
 pub async fn load_string(file_name: &str) -> anyhow::Result<String> {
     cfg_if! {
         if #[cfg(target_arch = "wasm32")] {
@@ -38,6 +40,7 @@ pub async fn load_string(file_name: &str) -> anyhow::Result<String> {
     Ok(txt)
 }
 
+// Loads a binary file from the resources folder
 pub async fn load_binary(file_name: &str) -> anyhow::Result<Vec<u8>> {
     cfg_if! {
         if #[cfg(target_arch = "wasm32")] {
@@ -58,7 +61,7 @@ pub async fn load_binary(file_name: &str) -> anyhow::Result<Vec<u8>> {
     Ok(data)
 }
 
-
+// Creates a texture from a file name
 pub async fn load_texture(
     file_name: &str,
     wgpu_renderer: &mut impl wgpu_renderer::renderer::WgpuRendererInterface,
@@ -69,6 +72,8 @@ pub async fn load_texture(
     wgpu_renderer::vertex_texture_shader::Texture::new_from_bytes(wgpu_renderer, texture_bind_group_layout, &data, file_name, nr_mipmaps)
 }
 
+// Loads a .obj model with texture and materials
+// save_positions is an option to save vertex positions in CPU-memory
 pub async fn load_model(
     file_name: &str,
     wgpu_renderer: &mut impl wgpu_renderer::renderer::WgpuRendererInterface,

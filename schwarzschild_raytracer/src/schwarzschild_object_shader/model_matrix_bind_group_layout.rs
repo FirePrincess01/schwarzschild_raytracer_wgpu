@@ -1,11 +1,10 @@
 //! A bind group to create a buffer for the model matrix uniform in this shader
 //!
-#[allow(dead_code)]
+
 pub struct ModelMatrixBindGroupLayout {
     model_matrix_bind_group_layout: wgpu::BindGroupLayout,
 }
 
-#[allow(dead_code)]
 impl ModelMatrixBindGroupLayout {
 
     pub fn new(device: &wgpu::Device) -> Self {

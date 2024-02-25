@@ -2,6 +2,7 @@ use glam::Vec3;
 
 const NR_NODES: usize = 48; //needs to be at least 3
 const SMALLEST_ANGLE: f32 = 0.05;
+const JUMP_TOLERANCE: f32 = 0.5;
 
 pub struct RayConnector {
     schwarz_r: f32,
@@ -26,7 +27,6 @@ impl RayConnector {
         }
     }
 
-    //TODO use reference for position
     pub fn reset_ray(&mut self, other_position: Vec3) -> f32 {
         self.needs_reset = false;
         let u0 = 1. / other_position.length();
@@ -46,8 +46,7 @@ impl RayConnector {
         return self.update_ray(other_position, 5);
     }
 
-    // Updates the ray and calculates the current incoming angle for other_position
-    // The output is packed as [current_position, incoming_angle]
+    // Updates the ray and calculates the current incoming angle for other_position, which is returned
     pub fn update_ray(&mut self, other_position: Vec3, iterations: usize) -> f32 {
         if self.needs_reset {
             return self.reset_ray(other_position);
@@ -64,17 +63,16 @@ impl RayConnector {
         if self.orbit_angle < SMALLEST_ANGLE {
             self.needs_reset = true;
             let incoming_angle: f32;
+            // points are aligned
             if self.orbit_angle == 0. {
                 incoming_angle = if other_position.length() > self.pos.length() {0.} else {std::f32::consts::PI};
             }
+            // calculate with just one discretization interval, cannot use euclidian calculations
             else {
                 let u0 = other_position.length_recip();
                 let u_bar = (self.pos.length_recip() - u0) / self.orbit_angle - self.orbit_angle / 2. * (-u0 + 1.5 * self.schwarz_r * u0 * u0);
                 incoming_angle = self.calc_ray_angle(u_bar, 1. / u0);
             }
-            // No euclidian geometry allowed!
-            //let incoming_angle = Vec3::angle_between(other_position - self.pos, - self.pos) 
-            //    * if self.less_than_180 {1.} else {-1.};
             self.last_angle = incoming_angle;
             return incoming_angle;
         }
@@ -82,8 +80,8 @@ impl RayConnector {
         let u0 = other_position.length_recip();
         let u1 = self.pos.length_recip();
 
-        // If the observer jumps by more than 0.5, we gotta reset the ray
-        if (u0.recip() - self.u_ray[0].recip()).abs() > 0.5 {
+        // If the observer jumps by more than the jump tolerance, we gotta reset the ray
+        if (u0.recip() - self.u_ray[0].recip()).abs() > JUMP_TOLERANCE {
             return self.reset_ray(other_position);
         }
         
@@ -139,7 +137,7 @@ impl RayConnector {
     // Sets the point to a new position
     // Resets the ray if the position moves by more than 0.1
     pub fn set_position(&mut self, new_pos: Vec3) {
-        if self.pos.distance_squared(new_pos) > 0.01 {
+        if self.pos.distance_squared(new_pos) > JUMP_TOLERANCE * JUMP_TOLERANCE {
             self.needs_reset = true;
         }
         self.pos = new_pos;

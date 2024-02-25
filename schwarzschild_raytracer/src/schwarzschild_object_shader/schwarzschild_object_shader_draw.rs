@@ -1,4 +1,4 @@
-// interface to draw a sphere object
+// interface to draw a model around a black hole
 
 pub trait SchwarzschildObjectShaderDraw
 {

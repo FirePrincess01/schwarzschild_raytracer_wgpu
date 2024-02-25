@@ -7,7 +7,7 @@ struct VertexInput {
     @location(2) normal: vec3<f32>,
 }
 
-// This gets updated constantly
+// This gets updated each frame
 struct AngleInput {
     @location(3) angle: f32,
 }
@@ -57,7 +57,7 @@ fn vs_main(vertex: VertexInput, angle: AngleInput) -> VertexOutput {
     // Create actual position on observer tangent space
     var polar = vec2<f32>(atan2(carthesic.y, carthesic.x), angle.angle);
     // Negative incoming angles indicate the farside ray,
-    // Thus we transform to standard polar coordinates
+    // Thus we flip the phi coordinate and make bh_arc >180°
     if polar.y < 0. {
         polar.x += 2. * M_PI_2;
         bh_arc = 1. - bh_arc;

@@ -27,7 +27,6 @@ use wasm_bindgen::prelude::*;
 
 struct SchwarzschildRaytracer<'a> {
     size: winit::dpi::PhysicalSize<u32>,
-    scale_factor: f32,
 
     renderer: renderer::Renderer<'a>,
     performance_monitor: performance_monitor::PerformanceMonitor,
@@ -56,7 +55,6 @@ impl<'a> SchwarzschildRaytracer<'a> {
     pub async fn new(window: &'a winit::window::Window) -> Self 
     {
         let size = window.inner_size();
-        let scale_factor = window.scale_factor() as f32;
         let width = size.width;
         let height = size.height;
 
@@ -122,8 +120,7 @@ impl<'a> SchwarzschildRaytracer<'a> {
 
         Self {
             size,
-            scale_factor,
-
+            
             renderer,
             performance_monitor,
             fps,
@@ -252,9 +249,6 @@ impl<'a> SchwarzschildRaytracer<'a> {
     }
 
     fn update_rotation_gui(&mut self, dt: instant::Duration) {
-        //if self.rotation_delta.abs() < 0.00001 {
-        //    return;
-        //}
         self.selected_rotation += self.rotation_delta * dt.as_secs_f64();
         self.gui.adjust_spin_set_value(&mut self.renderer.wgpu_renderer, &self.font, self.selected_rotation as u32);
         let stability = simulation::orbit::Orbit::is_stable(self.selected_rotation, self.renderer.get_schwarz_r(), self.renderer.get_radial_position());
@@ -264,24 +258,6 @@ impl<'a> SchwarzschildRaytracer<'a> {
             simulation::orbit::OrbitStability::EscapeTrajectory => {self.gui.adjust_spin_set_colors(false, false, true);},
         }
     }
-}
-
-#[allow(unused)]
-fn apply_scale_factor(position: winit::dpi::PhysicalPosition<f64>, scale_factor: f32) 
--> winit::dpi::PhysicalPosition<f64> 
-{
-    // cfg_if::cfg_if! {
-    //     // apply scale factor for the web
-    //     if #[cfg(target_arch = "wasm32")] {
-    //         let mut res = position;
-    //         res.x = res.x / scale_factor as f64;
-    //         res.y = res.y / scale_factor as f64;
-    //         res
-    //     }
-    //     else {
-            position
-    //     }
-    // }
 }
 
 impl<'a> default_window::DefaultWindowApp for SchwarzschildRaytracer<'a> 
@@ -299,9 +275,8 @@ impl<'a> default_window::DefaultWindowApp for SchwarzschildRaytracer<'a>
         self.gui.resize(&mut self.renderer.wgpu_renderer, width, height);
     }
 
-    fn update_scale_factor(&mut self, scale_factor: f32) {
-        self.scale_factor = scale_factor;
-    }
+    // dummy
+    fn update_scale_factor(&mut self, scale_factor: f32) {}
 
     fn update(&mut self, dt: instant::Duration) {
         self.update_rotation_gui(dt);
@@ -363,12 +338,11 @@ impl<'a> default_window::DefaultWindowApp for SchwarzschildRaytracer<'a>
                     true
                 }
                 WindowEvent::CursorMoved { position, .. } => {
-                    let pos = apply_scale_factor(*position, self.scale_factor);
-                    let res = self.gui.mouse_moved(pos.x as u32, pos.y as u32);
+                    let res = self.gui.mouse_moved(position.x as u32, position.y as u32);
                     self.handle_gui_event(&res);
 
                     if !res.consumed {
-                        self.renderer.process_mouse_position(pos.x, pos.y);
+                        self.renderer.process_mouse_position(position.x, position.y);
                     }
                     true
                 }
@@ -388,7 +362,7 @@ impl<'a> default_window::DefaultWindowApp for SchwarzschildRaytracer<'a>
                     true
                 }
                 WindowEvent::Touch(touch) => {
-                    let pos = apply_scale_factor(touch.location, self.scale_factor);
+                    let pos = touch.location;
     
                     match touch.phase {
                         TouchPhase::Started => {

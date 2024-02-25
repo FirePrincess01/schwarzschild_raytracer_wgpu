@@ -4,7 +4,6 @@ use glam::DVec3;
 use winit::event::*;
 use winit::dpi::PhysicalPosition;
 use instant::Duration;
-
 use crate::simulation::observer::Observer;
 
 #[derive(Debug)]

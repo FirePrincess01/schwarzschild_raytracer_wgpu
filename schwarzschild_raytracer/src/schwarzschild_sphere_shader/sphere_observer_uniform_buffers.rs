@@ -1,6 +1,7 @@
-//! Contains a buffer for the CameraUniform struct
+//! Contains a buffer for the SphereObserver struct
 //! The whole thing contains three 4x4 matrices (they are 3x3, but are inflated for byte alignment),
-//! a scalar velocity factor and the 3D position packed into a 4D vector
+//! a scalar velocity factor and the 3D position packed into a 4D vector.
+//! Also used to transform meshes
 
 use super::super::simulation::observer::TransformationPipeline;
 use super::sphere_observer_bind_group_layout;

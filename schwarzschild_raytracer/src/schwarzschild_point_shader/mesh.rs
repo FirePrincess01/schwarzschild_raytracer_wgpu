@@ -1,7 +1,7 @@
 use wgpu_renderer::vertex_texture_shader::IndexBuffer;
 
-use super::{vertex_buffer::VertexBuffer, vertex::Vertex};
-
+use super::vertex_buffer::VertexBuffer;
+use super::vertex::Vertex;
 
 
 pub struct Mesh {

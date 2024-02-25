@@ -157,7 +157,7 @@ impl Orbit {
         self.u_bar += delta_phi * (k1_v + 2. * k2_v + 2. * k3_v + k4_v) / 6.;
 
 
-        //Runge Kutta 4 scheme
+        //Wrong Runge Kutta 4 scheme
         // let a_u = u + delta_phi / 2. * u_bar;
         // let a_u_bar = u_bar + delta_phi / 2. * (schwarz_r * (1. / (2. * l *l) + 3. / 2. * u * u) - u);
         // let b_u = u + delta_phi / 2. * a_u_bar;
@@ -173,8 +173,7 @@ impl Orbit {
         
         // self.u = next_u;
         // self.u_bar = next_u_bar;
-        // TODO: handle u < 0 ?
-        if self.u.is_infinite() || self.u > 100.{
+        if self.u.is_infinite() || self.u > 100. || self.u < 0.{
             self.has_hit_singularity = true;
         }
         else {

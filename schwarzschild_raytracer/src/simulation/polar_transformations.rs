@@ -1,5 +1,6 @@
 //! Some utility functions to help with polar coordinates and 
 //! construct matrices suitable for the coordinate conventions in this framework
+//! theta = 0 is the equator in this setting
 //! I mean, what lunatic seriously thinks y is up?
 
 use glam::*;
@@ -14,6 +15,7 @@ pub fn carthesic_to_polar(vec: DVec3) -> DVec3 {
     return polar;
 }
 
+// (r, phi, theta) -> (x,y,z)
 pub fn polar_to_carthesic(polar: DVec3) -> DVec3 {
     let mut vec = DVec3::ZERO;
     vec.x = polar.x * polar.y.cos() * polar.z.cos();
@@ -22,6 +24,7 @@ pub fn polar_to_carthesic(polar: DVec3) -> DVec3 {
     return vec;
 }
 
+// (phi,theta) -> (x,y,z)
 pub fn polar2_to_carthesic(polar: DVec2) -> DVec3 {
     let mut vec = DVec3::ZERO;
     vec.x = polar.x.cos() * polar.y.cos();

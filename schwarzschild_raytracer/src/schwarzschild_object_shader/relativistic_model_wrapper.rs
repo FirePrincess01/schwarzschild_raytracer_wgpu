@@ -2,19 +2,25 @@
 
 use glam::Vec3;
 use crate::simulation::ray_connector::RayConnector;
-use wgpu::{core::instance, util::DeviceExt};
+use wgpu::util::DeviceExt;
 
-use super::{model_matrix_bind_group_layout::ModelMatrixBindGroupLayout, model_matrix_uniform_buffers::ModelMatrixUniformBuffer, schwarzschild_object_shader_draw::SchwarzschildObjectShaderDraw};
+use super::model_matrix_bind_group_layout::ModelMatrixBindGroupLayout;
+use super::model_matrix_uniform_buffers::ModelMatrixUniformBuffer;
+use super::schwarzschild_object_shader_draw::SchwarzschildObjectShaderDraw;
 
 pub struct RelativisticModelWrapper {
+    // The basic model
     model: super::model::Model,
-
+    // The matrix determining rotation, position and scale of the model
     pub model_matrix: glam::Mat4,
     matrix_buffer: ModelMatrixUniformBuffer,
 
+    // Flag to indicate if we render the object a second time with light passing more than 180° around the BH
     has_farside: bool,
+    // Simulates the light rays between observer and all the points
     points: Vec<Vec<RayConnector>>,
     points_farside: Vec<Vec<RayConnector>>,
+    // Vertex buffers for incoming angle each vertex is observed at
     light_buffers: Vec<wgpu::Buffer>, 
     light_buffers_farside: Vec<wgpu::Buffer>,
 
@@ -114,8 +120,10 @@ impl RelativisticModelWrapper {
             glam::Mat4::from_translation(Vec3::new(20., 0., 0.)) *
             glam::Mat4::from_rotation_z(1. * seconds) * 
             glam::Mat4::from_scale(Vec3::new(3., 3., 3.));
+
         self.matrix_buffer.update(queue, &self.model_matrix);
 
+        // update vertex positions
         for i in 0..self.points.len() {
             for j in 0..self.points[i].len() {
                 let pos = self.model_matrix.transform_point3(self.model.positions[i][j]);
@@ -126,9 +134,9 @@ impl RelativisticModelWrapper {
                     self.points_farside[i][j].set_position(pos);
                 }
             }
-
         }
         
+        // Update ray connectors and load resulting angles to Buffers
         for i in 0..self.points.len() {
             self.points[i].iter_mut().for_each(|point| { 
                 point.update_ray(observer_pos, 1); 
@@ -166,6 +174,7 @@ impl RelativisticModelWrapper {
 }
 
 impl SchwarzschildObjectShaderDraw for RelativisticModelWrapper {
+    // Renders the model
     fn draw<'a>(&'a self, render_pass: &mut wgpu::RenderPass<'a>) {
         self.matrix_buffer.bind(render_pass);
 
